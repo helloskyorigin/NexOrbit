@@ -30,17 +30,20 @@ export const AppShell: React.FC<AppShellProps> = ({
   children,
   showDevTabOption = false,
 }) => {
-  const [activePage, setActivePage] = useState<string>(() => {
+  const [activePage, setActivePage] = useState<string>(initialPage);
+  const [activeConnectorId, setActiveConnectorId] = useState<ConnectorId | null>(null);
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+
+  useEffect(() => {
     if (typeof window !== 'undefined' && window.location.hash) {
       const hashPage = window.location.hash.replace('#', '');
       if (PAGE_CONFIG[hashPage]) {
-        return hashPage;
+        setTimeout(() => {
+          setActivePage(hashPage);
+        }, 0);
       }
     }
-    return initialPage;
-  });
-  const [activeConnectorId, setActiveConnectorId] = useState<ConnectorId | null>(null);
-  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+  }, []);
 
   const handleSelectPage = (pageId: string) => {
     setActivePage(pageId);
