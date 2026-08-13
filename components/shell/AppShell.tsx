@@ -7,6 +7,7 @@ import { MobileNav } from './MobileNav';
 import { ConnectorModal, ConnectorId } from './ConnectorModal';
 import { PlaceholderPage, PAGE_CONFIG } from './PlaceholderPage';
 import { HomeDashboard } from '../home/HomeDashboard';
+import { AskMyWorldView } from '../ask/AskMyWorldView';
 import { Drawer } from '../ui/Drawer';
 import { Terminal, Palette, Sparkles } from 'lucide-react';
 import { Badge } from '../ui/Badge';
@@ -97,6 +98,11 @@ export const AppShell: React.FC<AppShellProps> = ({
               children
             ) : activePage === 'home' ? (
               <HomeDashboard
+                onNavigate={handleSelectPage}
+                onOpenConnector={(id) => setActiveConnectorId(id)}
+              />
+            ) : activePage === 'ask' ? (
+              <AskMyWorldView
                 onNavigate={handleSelectPage}
                 onOpenConnector={(id) => setActiveConnectorId(id)}
               />
