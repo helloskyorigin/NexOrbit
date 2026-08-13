@@ -3,29 +3,18 @@
 import React, { useState } from 'react';
 import {
   Sparkles,
-  ArrowRight,
   Brain,
   CheckCircle2,
-  AlertCircle,
-  FileText,
-  Clock,
   X,
-  Bot,
-  Layers,
-  Search,
+  MessageSquare,
+  Calendar as CalendarIcon,
+  FileText,
+  ChevronRight,
 } from 'lucide-react';
 import { AICommandInput } from '../ui/AICommandInput';
-import { SummaryCards } from './SummaryCards';
-import { TodayFocus, FocusItem } from './TodayFocus';
-import { CleanMyDayCard } from './CleanMyDayCard';
-import { RightRail } from './RightRail';
-import { RecentConversations, ConversationItem } from './RecentConversations';
-import { GoalsPreview } from './GoalsPreview';
-import { ConnectedAppsSummary } from './ConnectedAppsSummary';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
-import { GlassSurface } from '../ui/Surfaces';
 import { ConnectorId } from '../shell/ConnectorModal';
 import { useToast } from '../ui/Toast';
 
@@ -40,7 +29,6 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
 }) => {
   const { addToast } = useToast();
   const [commandText, setCommandText] = useState('');
-  const [selectedTask, setSelectedTask] = useState('ASK_MY_WORLD');
   
   // Local state for mock AI responses
   const [aiResponse, setAiResponse] = useState<{
@@ -51,17 +39,18 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
   } | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // Focus Item Modal state
-  const [selectedFocusItem, setSelectedFocusItem] = useState<FocusItem | null>(null);
-
-  // Conversation Detail Modal state
-  const [selectedConversation, setSelectedConversation] = useState<ConversationItem | null>(null);
+  // Active Modal States for Focus items
+  const [activeModalItem, setActiveModalItem] = useState<{
+    id: string;
+    title: string;
+    description: string;
+    type: 'deadline' | 'client' | 'meeting';
+  } | null>(null);
 
   const quickPrompts = [
     'What changed since yesterday?',
     'Do I have any deadline conflicts?',
     'What should I focus on today?',
-    'Prepare my next meeting.',
   ];
 
   const handleCommandSubmit = (text: string) => {
@@ -84,86 +73,58 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
       addToast({
         type: 'info',
         title: 'NEXORBIT AI Response',
-        description: 'Synthesized personal context from 3 connected apps.',
+        description: 'Synthesized personal context from connected sources.',
       });
     }, 800);
   };
 
-  const handleSelectQuickPrompt = (promptText: string) => {
-    setCommandText(promptText);
-  };
-
   return (
-    <div className="space-y-8 animate-fadeIn pb-12">
-      {/* 1. HOME HEADER */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
-        <div className="space-y-1">
-          <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 flex items-center gap-2">
+    <div className="space-y-4 animate-fadeIn pb-6 max-w-7xl mx-auto">
+      {/* 1. TOP AREA */}
+      <div className="flex items-center justify-between border-b border-slate-200/80 pb-2.5">
+        <div className="space-y-0.5">
+          <h1 className="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900">
             Good morning, Satyam 👋
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 font-medium">
+          <p className="text-xs text-slate-500 font-medium">
             Here&apos;s what matters in your world today.
           </p>
         </div>
-
-        <div className="flex items-center gap-2 shrink-0">
-          <Badge variant="indigo" size="md" className="bg-indigo-50 text-indigo-700 border-indigo-200">
-            <span className="h-2 w-2 rounded-full bg-emerald-500 mr-1.5 animate-pulse" />
-            AI Brain Synced
-          </Badge>
-        </div>
       </div>
 
-      {/* 2. HERO AI COMMAND AREA */}
-      <div className="space-y-3">
+      {/* 2. AI COMMAND HERO */}
+      <div className="space-y-2">
         <AICommandInput
           value={commandText}
           onChange={setCommandText}
           onSubmit={handleCommandSubmit}
-          selectedTask={selectedTask}
-          onTaskChange={setSelectedTask}
           placeholder="What do you want to know, solve, or accomplish?"
+          suggestedPrompts={quickPrompts}
         />
-
-        {/* Quick Prompts Suggestions */}
-        <div className="flex flex-wrap items-center gap-2 pt-1">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mr-1">
-            Suggestions:
-          </span>
-          {quickPrompts.map((promptText, idx) => (
-            <button
-              key={idx}
-              onClick={() => handleSelectQuickPrompt(promptText)}
-              className="px-2.5 py-1 rounded-lg bg-white border border-slate-200/90 hover:border-indigo-300 hover:bg-indigo-50/60 hover:text-indigo-900 text-xs font-medium text-slate-600 transition-all duration-150 shadow-xs"
-            >
-              {promptText}
-            </button>
-          ))}
-        </div>
 
         {/* Generating Loading State */}
         {isGenerating && (
-          <GlassSurface className="p-5 rounded-2xl border border-indigo-200 flex items-center gap-3 animate-pulse">
-            <Bot className="h-5 w-5 text-indigo-600 animate-bounce" />
+          <div className="p-3.5 rounded-xl border border-indigo-200 bg-indigo-50/50 flex items-center gap-3 animate-pulse">
+            <Brain className="h-4 w-4 text-indigo-600 animate-bounce" />
             <div className="text-xs font-semibold text-slate-800">
               Synthesizing personal context across Gmail, Calendar &amp; Drive...
             </div>
-          </GlassSurface>
+          </div>
         )}
 
-        {/* Mock AI Response Panel */}
+        {/* AI Response Panel */}
         {aiResponse && !isGenerating && (
-          <GlassSurface className="p-6 rounded-2xl border border-indigo-200 bg-white shadow-sm space-y-4 relative animate-fadeIn">
+          <div className="p-4 rounded-2xl border border-indigo-200 bg-white shadow-xs space-y-3 relative animate-fadeIn">
             <button
               onClick={() => setAiResponse(null)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1"
+              className="absolute top-3.5 right-3.5 text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100"
             >
               <X className="h-4 w-4" />
             </button>
 
             <div className="flex items-center gap-2">
-              <div className="h-7 w-7 rounded-lg bg-indigo-900 text-indigo-300 flex items-center justify-center font-bold text-xs">
-                <Brain className="h-4 w-4" />
+              <div className="h-6 w-6 rounded-md bg-indigo-900 text-indigo-300 flex items-center justify-center font-bold text-xs">
+                <Brain className="h-3.5 w-3.5" />
               </div>
               <div>
                 <h4 className="text-xs font-bold text-slate-900">NEXORBIT Personal AI Synthesis</h4>
@@ -171,76 +132,288 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
               </div>
             </div>
 
-            <div className="text-xs text-slate-700 whitespace-pre-line leading-relaxed font-sans bg-slate-50 p-4 rounded-xl border border-slate-200/80">
+            <div className="text-xs text-slate-700 whitespace-pre-line leading-relaxed font-sans bg-slate-50/80 p-3 rounded-xl border border-slate-200/80">
               {aiResponse.text}
             </div>
 
-            {/* Source Citations */}
-            <div className="space-y-1.5 pt-1">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-                Context Sources Used
-              </span>
-              <div className="flex flex-wrap gap-2">
-                {aiResponse.sources.map((src, i) => (
-                  <span
-                    key={i}
-                    className="text-[11px] font-medium bg-indigo-50 text-indigo-800 px-2.5 py-1 rounded-lg border border-indigo-100 flex items-center gap-1.5"
-                  >
-                    <CheckCircle2 className="h-3 w-3 text-indigo-600" />
-                    {src}
-                  </span>
-                ))}
-              </div>
+            <div className="flex flex-wrap gap-2 pt-0.5">
+              {aiResponse.sources.map((src, i) => (
+                <span
+                  key={i}
+                  className="text-[10px] font-medium bg-indigo-50 text-indigo-800 px-2.5 py-0.5 rounded-md border border-indigo-100/80 flex items-center gap-1"
+                >
+                  <CheckCircle2 className="h-3 w-3 text-indigo-600" />
+                  {src}
+                </span>
+              ))}
             </div>
-          </GlassSurface>
+          </div>
         )}
       </div>
 
-      {/* 3. SUMMARY ROW */}
-      <SummaryCards onCardClick={(type) => onNavigate('what-changed')} />
+      {/* 3. SUMMARY STRIP */}
+      <div className="flex flex-wrap items-center gap-2 sm:gap-6 py-2 px-1 text-xs text-slate-600 border-y border-slate-200/70 font-medium">
+        <button
+          onClick={() => onNavigate('clean-my-day')}
+          className="flex items-center gap-1.5 hover:text-indigo-600 transition-colors group cursor-pointer"
+        >
+          <span className="h-2 w-2 rounded-full bg-amber-500 shrink-0" />
+          <span className="font-extrabold text-slate-900 group-hover:text-indigo-600">2</span>
+          <span>Need attention</span>
+        </button>
 
-      {/* 4. MAIN LAYOUT GRID (2 COLUMNS ON DESKTOP, RIGHT RAIL IN SECOND COLUMN) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* LEFT / PRIMARY COLUMN (2 SPANS ON DESKTOP) */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Today's Focus */}
-          <TodayFocus onItemAction={(item) => setSelectedFocusItem(item)} />
+        <span className="text-slate-300 hidden sm:inline">•</span>
 
-          {/* Clean My Day Feature Card */}
-          <CleanMyDayCard />
+        <button
+          onClick={() => onNavigate('what-changed')}
+          className="flex items-center gap-1.5 hover:text-indigo-600 transition-colors group cursor-pointer"
+        >
+          <span className="h-2 w-2 rounded-full bg-indigo-500 shrink-0" />
+          <span className="font-extrabold text-slate-900 group-hover:text-indigo-600">3</span>
+          <span>Changed</span>
+        </button>
 
-          {/* Recent Conversations */}
-          <RecentConversations
-            onSelectConversation={(item) => setSelectedConversation(item)}
-          />
+        <span className="text-slate-300 hidden sm:inline">•</span>
 
-          {/* Goals Preview */}
-          <GoalsPreview onNavigate={onNavigate} />
-
-          {/* Connected Apps Summary */}
-          <ConnectedAppsSummary onOpenConnector={onOpenConnector} />
+        <div className="flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-full bg-sky-500 shrink-0" />
+          <span className="font-extrabold text-slate-900">2</span>
+          <span>Upcoming</span>
         </div>
 
-        {/* RIGHT INFORMATION RAIL (1 SPAN ON DESKTOP) */}
-        <div className="lg:col-span-1">
-          <RightRail
-            onSelectPrompt={handleSelectQuickPrompt}
-            onNavigate={onNavigate}
-            onOpenConnector={onOpenConnector}
-          />
+        <span className="text-slate-300 hidden sm:inline">•</span>
+
+        <div className="flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
+          <span className="font-extrabold text-slate-900">6</span>
+          <span>Completed</span>
         </div>
       </div>
 
-      {/* FOCUS ITEM ACTION MODAL */}
+      {/* 4. MAIN CONTENT (TWO COLUMNS) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start pt-1">
+        {/* LEFT COLUMN: TODAY'S FOCUS */}
+        <div className="space-y-3.5">
+          <div className="space-y-0.5">
+            <h3 className="text-sm font-extrabold text-slate-900 tracking-tight">
+              Today&apos;s Focus
+            </h3>
+            <p className="text-xs text-slate-500 font-medium">
+              Things that may need your attention.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            {/* Item 1 */}
+            <div className="p-3 rounded-xl bg-white border border-slate-200/90 shadow-2xs hover:border-indigo-200 transition-all flex items-start justify-between gap-3">
+              <div className="space-y-0.5 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-amber-500 shrink-0" />
+                  <h4 className="text-xs font-bold text-slate-900 truncate">
+                    Deadline conflict detected
+                  </h4>
+                </div>
+                <p className="text-xs text-slate-600 font-medium leading-relaxed pl-4">
+                  Project Alpha has different dates across your connected sources.
+                </p>
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setActiveModalItem({
+                    id: '1',
+                    title: 'Deadline conflict detected',
+                    description:
+                      'Project Alpha deadline is Friday 5:00 PM in Gmail, but Google Calendar has a meeting conflict at 4:30 PM.',
+                    type: 'deadline',
+                  })
+                }
+                className="text-xs font-semibold h-7 px-2.5 shrink-0 bg-slate-50 hover:bg-slate-100 border-slate-200"
+              >
+                Review
+              </Button>
+            </div>
+
+            {/* Item 2 */}
+            <div className="p-3 rounded-xl bg-white border border-slate-200/90 shadow-2xs hover:border-indigo-200 transition-all flex items-start justify-between gap-3">
+              <div className="space-y-0.5 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-indigo-500 shrink-0" />
+                  <h4 className="text-xs font-bold text-slate-900 truncate">
+                    Client hasn&apos;t replied
+                  </h4>
+                </div>
+                <p className="text-xs text-slate-600 font-medium leading-relaxed pl-4">
+                  Rahul hasn&apos;t replied to your recent conversation.
+                </p>
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setActiveModalItem({
+                    id: '2',
+                    title: 'Client hasn\'t replied',
+                    description:
+                      'Last message sent 24 hours ago regarding Phase 1 security sign-off. Click Open to generate follow-up draft.',
+                    type: 'client',
+                  })
+                }
+                className="text-xs font-semibold h-7 px-2.5 shrink-0 bg-slate-50 hover:bg-slate-100 border-slate-200"
+              >
+                Open
+              </Button>
+            </div>
+
+            {/* Item 3 */}
+            <div className="p-3 rounded-xl bg-white border border-slate-200/90 shadow-2xs hover:border-indigo-200 transition-all flex items-start justify-between gap-3">
+              <div className="space-y-0.5 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-sky-500 shrink-0" />
+                  <h4 className="text-xs font-bold text-slate-900 truncate">
+                    Meeting tomorrow
+                  </h4>
+                </div>
+                <p className="text-xs text-slate-600 font-medium leading-relaxed pl-4">
+                  Project Alpha sync at 10:00 AM.
+                </p>
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setActiveModalItem({
+                    id: '3',
+                    title: 'Meeting tomorrow: Project Alpha Sync',
+                    description:
+                      'Agenda: Q3 Roadmap preview & Alpha spec review with Sarah and Marcus. Click Prepare to synthesize briefing note.',
+                    type: 'meeting',
+                  })
+                }
+                className="text-xs font-semibold h-7 px-2.5 shrink-0 bg-slate-50 hover:bg-slate-100 border-slate-200"
+              >
+                Prepare
+              </Button>
+            </div>
+          </div>
+
+          {/* CLEAN MY DAY SHORTCUT */}
+          <div className="p-3 rounded-xl bg-slate-900 text-white flex items-center justify-between gap-3 shadow-2xs">
+            <div className="space-y-0.5">
+              <h4 className="text-xs font-extrabold text-white flex items-center gap-1.5">
+                <Sparkles className="h-3.5 w-3.5 text-indigo-400" />
+                <span>Clean My Day</span>
+              </h4>
+              <p className="text-[11px] text-slate-300 font-medium">
+                See what matters most today.
+              </p>
+            </div>
+
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => onNavigate('clean-my-day')}
+              className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold h-8 px-3 shrink-0"
+            >
+              Clean My Day →
+            </Button>
+          </div>
+        </div>
+
+        {/* RIGHT COLUMN: WHAT CHANGED & TODAY'S AGENDA */}
+        <div className="space-y-4">
+          {/* WHAT CHANGED */}
+          <div className="space-y-2.5">
+            <div className="space-y-0.5">
+              <h3 className="text-sm font-extrabold text-slate-900 tracking-tight">
+                What changed
+              </h3>
+              <p className="text-xs text-slate-500 font-medium">
+                Important updates since your last visit.
+              </p>
+            </div>
+
+            <div className="p-3 rounded-xl bg-white border border-slate-200/90 shadow-2xs space-y-2 text-xs text-slate-700">
+              <div className="flex items-center gap-2 font-medium">
+                <MessageSquare className="h-3.5 w-3.5 text-indigo-600 shrink-0" />
+                <span><strong>3</strong> important conversations</span>
+              </div>
+              <div className="flex items-center gap-2 font-medium">
+                <CalendarIcon className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+                <span><strong>1</strong> meeting rescheduled</span>
+              </div>
+              <div className="flex items-center gap-2 font-medium">
+                <FileText className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+                <span><strong>2</strong> files updated</span>
+              </div>
+
+              <div className="pt-1.5 border-t border-slate-100 flex justify-end">
+                <button
+                  onClick={() => onNavigate('what-changed')}
+                  className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 transition-colors"
+                >
+                  <span>View all changes</span>
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* TODAY'S AGENDA */}
+          <div className="space-y-2.5">
+            <div className="space-y-0.5">
+              <h3 className="text-sm font-extrabold text-slate-900 tracking-tight">
+                Today&apos;s Agenda
+              </h3>
+            </div>
+
+            <div className="p-3 rounded-xl bg-white border border-slate-200/90 shadow-2xs space-y-1.5 text-xs">
+              <div className="flex items-center justify-between py-1 border-b border-slate-100">
+                <span className="font-mono text-slate-400 font-semibold text-[11px]">10:00</span>
+                <span className="font-bold text-slate-900">Project Alpha Sync</span>
+                <Badge variant="indigo" size="sm" className="text-[10px]">Upcoming</Badge>
+              </div>
+
+              <div className="flex items-center justify-between py-1 border-b border-slate-100">
+                <span className="font-mono text-slate-400 font-semibold text-[11px]">13:30</span>
+                <span className="font-bold text-slate-900">Product Review</span>
+                <Badge variant="default" size="sm" className="text-[10px]">Calendar</Badge>
+              </div>
+
+              <div className="flex items-center justify-between py-1">
+                <span className="font-mono text-slate-400 font-semibold text-[11px]">16:00</span>
+                <span className="font-bold text-slate-900">Planning</span>
+                <Badge variant="default" size="sm" className="text-[10px]">Calendar</Badge>
+              </div>
+
+              <div className="pt-1 border-t border-slate-100 flex justify-end">
+                <button
+                  onClick={() => onOpenConnector('calendar')}
+                  className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 transition-colors"
+                >
+                  <span>View calendar</span>
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ITEM DETAIL MODAL */}
       <Modal
-        isOpen={!!selectedFocusItem}
-        onClose={() => setSelectedFocusItem(null)}
-        title={selectedFocusItem?.title || 'Focus Item Details'}
-        description="NEXORBIT Context & Action Options"
+        isOpen={!!activeModalItem}
+        onClose={() => setActiveModalItem(null)}
+        title={activeModalItem?.title || 'Action Detail'}
+        description="NEXORBIT Personal AI Intelligence"
         maxWidth="md"
         footer={
           <div className="flex items-center justify-between w-full">
-            <Button variant="ghost" size="sm" onClick={() => setSelectedFocusItem(null)}>
+            <Button variant="outline" size="sm" onClick={() => setActiveModalItem(null)}>
               Dismiss
             </Button>
             <Button
@@ -249,46 +422,22 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
               onClick={() => {
                 addToast({
                   type: 'success',
-                  title: 'Action Executed',
-                  description: `Resolved: ${selectedFocusItem?.title}`,
+                  title: 'Action Triggered',
+                  description: `Processed: ${activeModalItem?.title}`,
                 });
-                setSelectedFocusItem(null);
+                setActiveModalItem(null);
               }}
+              className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs"
             >
-              Confirm Resolution
+              Take Action
             </Button>
           </div>
         }
       >
-        <div className="space-y-4 text-xs text-slate-700">
-          <p className="leading-relaxed">{selectedFocusItem?.description}</p>
-
-          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
-            <span className="font-semibold text-slate-900 block">Synthesized Recommendation</span>
-            <p className="text-slate-600 text-[11px] leading-relaxed">
-              NEXORBIT detected a timing gap between your Google Calendar invitation and Gmail thread comments. Aligning these will prevent participant confusion during today&apos;s sync.
-            </p>
-          </div>
-        </div>
-      </Modal>
-
-      {/* CONVERSATION DETAIL MODAL */}
-      <Modal
-        isOpen={!!selectedConversation}
-        onClose={() => setSelectedConversation(null)}
-        title={selectedConversation?.title || 'Conversation History'}
-        description={`Saved query from ${selectedConversation?.timestamp}`}
-        maxWidth="md"
-        footer={
-          <Button variant="primary" size="sm" onClick={() => setSelectedConversation(null)}>
-            Close History
-          </Button>
-        }
-      >
         <div className="space-y-3 text-xs text-slate-700">
-          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
-            <span className="font-semibold text-slate-900 block mb-1">AI Context Summary</span>
-            <p className="text-slate-600 leading-relaxed">{selectedConversation?.summary}</p>
+          <p className="leading-relaxed font-medium">{activeModalItem?.description}</p>
+          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/90 text-slate-600 font-mono text-[11px]">
+            Connected Context: Gmail, Calendar, Drive Synced
           </div>
         </div>
       </Modal>

@@ -205,12 +205,12 @@ export const AICommandInput: React.FC<AICommandInputProps> = ({
               className={cn(
                 'inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-lg transition-all duration-150 border',
                 isDeepResearch
-                  ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                  ? 'bg-indigo-50 text-indigo-700 border-indigo-200 font-semibold'
                   : 'bg-transparent text-slate-600 border-transparent hover:bg-slate-100 hover:text-slate-900'
               )}
             >
               <Globe className="h-3.5 w-3.5" />
-              <span>Deep Research</span>
+              <span>Research</span>
             </button>
           </div>
 
