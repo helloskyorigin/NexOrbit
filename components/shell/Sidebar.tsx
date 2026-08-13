@@ -113,12 +113,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Connected Apps Section */}
         <div className="space-y-1.5 pt-2 border-t border-slate-100">
-          <div className="flex items-center justify-between px-2 mb-1">
-            <span className="text-[10px] font-semibold tracking-wider text-slate-400 uppercase">
+          <button
+            onClick={() => onSelectPage('connected-apps')}
+            className="w-full flex items-center justify-between px-2 mb-1 group text-left cursor-pointer"
+          >
+            <span className="text-[10px] font-semibold tracking-wider text-slate-400 uppercase group-hover:text-indigo-600 transition-colors">
               Connected Apps
             </span>
-            <Link2 className="h-3 w-3 text-slate-400" />
-          </div>
+            <Link2 className="h-3 w-3 text-slate-400 group-hover:text-indigo-600 transition-colors" />
+          </button>
           <div className="space-y-0.5">
             {CONNECTORS_NAV.map((conn) => {
               const info = CONNECTOR_DATA[conn.id];

@@ -10,6 +10,7 @@ import { HomeDashboard } from '../home/HomeDashboard';
 import { AskMyWorldView } from '../ask/AskMyWorldView';
 import { GoalsView } from '../goals/GoalsView';
 import { MemoryView } from '../memory/MemoryView';
+import { ConnectedAppsView } from '../connectors/ConnectedAppsView';
 import { Drawer } from '../ui/Drawer';
 import { Terminal, Palette, Sparkles } from 'lucide-react';
 import { Badge } from '../ui/Badge';
@@ -112,6 +113,11 @@ export const AppShell: React.FC<AppShellProps> = ({
               <GoalsView onNavigate={handleSelectPage} />
             ) : activePage === 'memory' ? (
               <MemoryView onNavigate={handleSelectPage} />
+            ) : activePage === 'connected-apps' || activePage === 'connectors' ? (
+              <ConnectedAppsView
+                onNavigate={handleSelectPage}
+                initialSelectedConnectorId={activeConnectorId}
+              />
             ) : (
               <PlaceholderPage pageId={activePage} onNavigate={handleSelectPage} />
             )}
