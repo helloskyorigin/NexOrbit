@@ -8,6 +8,8 @@ import { ConnectorModal, ConnectorId } from './ConnectorModal';
 import { PlaceholderPage, PAGE_CONFIG } from './PlaceholderPage';
 import { HomeDashboard } from '../home/HomeDashboard';
 import { AskMyWorldView } from '../ask/AskMyWorldView';
+import { GoalsView } from '../goals/GoalsView';
+import { MemoryView } from '../memory/MemoryView';
 import { Drawer } from '../ui/Drawer';
 import { Terminal, Palette, Sparkles } from 'lucide-react';
 import { Badge } from '../ui/Badge';
@@ -101,11 +103,15 @@ export const AppShell: React.FC<AppShellProps> = ({
                 onNavigate={handleSelectPage}
                 onOpenConnector={(id) => setActiveConnectorId(id)}
               />
-            ) : activePage === 'ask' ? (
+            ) : activePage === 'ask' || activePage === 'ask-my-world' ? (
               <AskMyWorldView
                 onNavigate={handleSelectPage}
                 onOpenConnector={(id) => setActiveConnectorId(id)}
               />
+            ) : activePage === 'goals' ? (
+              <GoalsView onNavigate={handleSelectPage} />
+            ) : activePage === 'memory' ? (
+              <MemoryView onNavigate={handleSelectPage} />
             ) : (
               <PlaceholderPage pageId={activePage} onNavigate={handleSelectPage} />
             )}
