@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { AlertTriangle, Clock, Calendar, Mail, HardDrive, FileText, CheckCircle2 } from 'lucide-react';
+import { Mail, Calendar, HardDrive, FileText } from 'lucide-react';
 import { InsightCardData, ConnectorType } from './types';
 import { cn } from '../../lib/utils';
 
@@ -36,9 +36,8 @@ export const InsightCard: React.FC<InsightCardProps> = ({
   return (
     <div
       className={cn(
-        'p-4 rounded-xl bg-white border border-slate-200/90 shadow-2xs hover:border-slate-300 transition-all space-y-2.5',
-        insight.priority === 'high' && 'border-amber-200 bg-amber-50/20',
-        insight.priority === 'medium' && 'border-indigo-200 bg-indigo-50/10',
+        'py-3 px-3.5 rounded-xl bg-slate-50/60 border border-slate-200/60 hover:bg-white hover:border-slate-200 transition-all space-y-1.5',
+        insight.priority === 'high' && 'border-amber-200/80 bg-amber-50/30',
         className
       )}
     >
@@ -52,29 +51,31 @@ export const InsightCard: React.FC<InsightCardProps> = ({
               insight.priority === 'info' && 'bg-sky-500'
             )}
           />
-          <h4 className="text-xs font-bold text-slate-900 tracking-tight">{insight.title}</h4>
+          <h4 className="text-xs sm:text-sm font-semibold text-slate-900 tracking-tight">
+            {insight.title}
+          </h4>
         </div>
         {insight.priority === 'high' && (
-          <span className="text-[10px] font-semibold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
+          <span className="text-[10px] font-medium text-amber-700 bg-amber-100/80 px-2 py-0.5 rounded-full">
             Attention Needed
           </span>
         )}
       </div>
 
-      <p className="text-xs text-slate-700 leading-relaxed pl-4">{insight.content}</p>
+      <p className="text-xs text-slate-600 leading-relaxed pl-4">{insight.content}</p>
 
       {/* Sources footer badge */}
       {insight.sources && insight.sources.length > 0 && (
-        <div className="flex items-center gap-2 pl-4 pt-1 border-t border-slate-100">
-          <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
-            Sources:
+        <div className="flex items-center gap-2 pl-4 pt-1">
+          <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">
+            Via:
           </span>
           <div className="flex flex-wrap gap-1.5">
             {insight.sources.map((src) => (
               <button
                 key={src.id}
                 onClick={() => onSelectSource?.(src.id)}
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 hover:bg-indigo-50 hover:text-indigo-900 border border-slate-200/80 text-[10px] font-medium text-slate-700 transition-colors"
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-white hover:bg-indigo-50 hover:text-indigo-900 border border-slate-200/70 text-[10px] font-normal text-slate-600 transition-colors"
               >
                 {getConnectorBadge(src.connector)}
                 <span>{src.connectorName}</span>
@@ -86,3 +87,4 @@ export const InsightCard: React.FC<InsightCardProps> = ({
     </div>
   );
 };
+

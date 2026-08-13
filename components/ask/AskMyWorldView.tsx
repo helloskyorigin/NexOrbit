@@ -44,7 +44,17 @@ export const AskMyWorldView: React.FC<AskMyWorldViewProps> = ({
   const [isThinking, setIsThinking] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isContextPanelOpen, setIsContextPanelOpen] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
   const [selectedSourceForModal, setSelectedSourceForModal] = useState<SourceItem | null>(null);
+
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const activeConv = conversations.find((c) => c.id === activeConversationId);
 
@@ -176,17 +186,16 @@ export const AskMyWorldView: React.FC<AskMyWorldViewProps> = ({
       />
 
       {/* 2. Main Body Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 items-start max-w-7xl mx-auto w-full">
         {/* Main Conversation Workspace Column */}
         <div
-          className={
-            isContextPanelOpen
-              ? 'lg:col-span-2 flex flex-col min-h-[500px] justify-between space-y-4'
-              : 'lg:col-span-3 flex flex-col min-h-[500px] justify-between space-y-4'
-          }
+          className={cn(
+            'flex flex-col min-h-[500px] justify-between space-y-4 w-full transition-all duration-200',
+            isContextPanelOpen ? 'lg:col-span-8 xl:col-span-8' : 'lg:col-span-12'
+          )}
         >
           {/* Conversation Stream / Empty State */}
-          <div className="flex-1 space-y-4">
+          <div className="flex-1 space-y-4 max-w-3xl mx-auto w-full">
             {!activeConv || activeConv.messages.length === 0 ? (
               <EmptyAskState onSelectSuggestion={handleSendPrompt} />
             ) : (
@@ -214,16 +223,29 @@ export const AskMyWorldView: React.FC<AskMyWorldViewProps> = ({
           </div>
 
           {/* Composer at the bottom */}
-          <AskComposer onSend={handleSendPrompt} isLoading={isThinking} />
+          <div className="max-w-3xl mx-auto w-full">
+            <AskComposer onSend={handleSendPrompt} isLoading={isThinking} />
+          </div>
         </div>
 
-        {/* Right Context Panel (Desktop) */}
+        {/* Right Context Panel (Desktop Sticky Rail) */}
         {isContextPanelOpen && (
-          <div className="hidden lg:block lg:col-span-1 sticky top-20">
+          <div className="hidden lg:block lg:col-span-4 xl:col-span-4 sticky top-20">
             <ContextPanel onClose={() => setIsContextPanelOpen(false)} />
           </div>
         )}
       </div>
+
+      {/* Mobile Context Drawer Modal */}
+      <Modal
+        isOpen={isContextPanelOpen && isMobile}
+        onClose={() => setIsContextPanelOpen(false)}
+        title="Workspace Context"
+        description="Connected context & relationship map"
+        maxWidth="sm"
+      >
+        <ContextPanel onClose={() => setIsContextPanelOpen(false)} />
+      </Modal>
 
       {/* Conversation History Modal */}
       <ConversationHistory

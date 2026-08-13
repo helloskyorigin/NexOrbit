@@ -304,7 +304,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
           </div>
 
           {/* CLEAN MY DAY SHORTCUT */}
-          <div className="p-3.5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs flex items-center justify-between gap-3">
+          <div className="p-3.5 rounded-2xl bg-gradient-to-r from-indigo-50/60 via-slate-50/30 to-purple-50/30 border border-indigo-100/80 shadow-2xs flex items-center justify-between gap-3 transition-all duration-200">
             <div className="space-y-0.5">
               <h4 className="text-xs font-semibold text-slate-900 flex items-center gap-1.5">
                 <Sparkles className="h-3.5 w-3.5 text-indigo-600" />
@@ -319,7 +319,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
               variant="primary"
               size="sm"
               onClick={() => onNavigate('clean-my-day')}
-              className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium h-7.5 px-3 shrink-0 rounded-lg"
+              className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium h-7.5 px-3.5 shrink-0 rounded-lg shadow-2xs hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200"
             >
               ✨ Clean My Day
             </Button>
