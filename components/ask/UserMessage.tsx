@@ -15,15 +15,15 @@ export const UserMessage: React.FC<UserMessageProps> = ({
   className,
 }) => {
   return (
-    <div className={cn('my-6 animate-fadeIn max-w-2xl mx-auto w-full border-b border-slate-100/40 pb-5', className)}>
-      <div className="space-y-1.5 pl-1">
-        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block">
-          User Query
-        </span>
-        <h1 className="text-[15px] sm:text-[17px] font-medium text-slate-800 tracking-tight leading-relaxed">
-          “{text}”
-        </h1>
-        <div className="text-[10px] text-slate-400 font-normal mt-1 block">{timestamp}</div>
+    <div className={cn('my-6 animate-fadeIn max-w-2xl mx-auto w-full', className)}>
+      <div className="p-3.5 sm:p-4 rounded-xl bg-slate-50 border border-slate-100 space-y-1">
+        <div className="flex items-center justify-between text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+          <span>User Question</span>
+          <span className="font-normal font-mono normal-case">{timestamp}</span>
+        </div>
+        <p className="text-xs sm:text-sm font-semibold text-slate-950 leading-relaxed font-sans">
+          {text}
+        </p>
       </div>
     </div>
   );

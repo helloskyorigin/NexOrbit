@@ -1,12 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Brain, ArrowRight, HelpCircle } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { AskResponseData, SourceItem } from './types';
 import { InsightCard } from './InsightCard';
-import { WhyPanel } from './WhyPanel';
 import { FollowUpSuggestions } from './FollowUpSuggestions';
-import { Button } from '../ui/Button';
 import { cn } from '../../lib/utils';
 
 export interface AIResponseProps {
@@ -24,7 +22,11 @@ export const AIResponse: React.FC<AIResponseProps> = ({
   onSelectSource,
   className,
 }) => {
-  const [isWhyOpen, setIsWhyOpen] = useState(false);
+  const [activeDisclosure, setActiveDisclosure] = useState<'reasoning' | 'sources' | 'why' | null>(null);
+
+  const toggleDisclosure = (type: 'reasoning' | 'sources' | 'why') => {
+    setActiveDisclosure((prev) => (prev === type ? null : type));
+  };
 
   return (
     <div className={cn('my-6 space-y-6 relative max-w-2xl mx-auto w-full animate-fadeIn', className)}>
@@ -36,31 +38,101 @@ export const AIResponse: React.FC<AIResponseProps> = ({
       {/* Top Header & Identity */}
       <div className="relative z-10 flex items-center justify-between gap-3 pb-2 border-b border-slate-100/60">
         <div className="flex items-center gap-2">
-          <div className="h-6 w-6 rounded-lg bg-indigo-50/80 text-indigo-600 flex items-center justify-center font-bold text-xs shrink-0 border border-indigo-100/40">
-            <Brain className="h-3.5 w-3.5 text-indigo-600" />
-          </div>
+          {/* Custom Orbital AI Mark */}
+          <svg className="h-4 w-4 text-indigo-600 animate-spin shrink-0" style={{ animationDuration: '6s' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <circle cx="12" cy="12" r="3" fill="currentColor" />
+            <ellipse cx="12" cy="12" rx="9" ry="3" transform="rotate(-30 12 12)" strokeLinecap="round" />
+          </svg>
           <div>
-            <h3 className="text-xs font-semibold text-indigo-900 tracking-tight">
-              NEXORBIT Workspace AI
+            <h3 className="text-[11px] font-bold text-slate-900 tracking-tight">
+              NEXORBIT AI Brain
             </h3>
-            <p className="text-[10px] text-slate-400 font-normal">{timestamp}</p>
           </div>
         </div>
 
-        <button
-          onClick={() => setIsWhyOpen(true)}
-          className="text-[10px] font-normal text-slate-400 hover:text-indigo-600 transition-colors"
-        >
-          Why am I seeing this?
-        </button>
+        <span className="text-[10px] font-mono text-slate-400 font-normal">{timestamp}</span>
       </div>
 
       {/* Dominant Statement */}
       <div className="relative z-10 space-y-1 pl-1">
-        <h2 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight leading-snug">
+        <h2 className="text-base sm:text-lg font-bold text-slate-950 tracking-tight leading-snug">
           {data.summaryText}
         </h2>
       </div>
+
+      {/* Progressive Disclosure Controls (Answer Depth) */}
+      <div className="relative z-10 pl-1 flex flex-wrap gap-2 pt-0.5">
+        <button
+          onClick={() => toggleDisclosure('reasoning')}
+          className={cn(
+            'px-2.5 py-1 rounded-xl text-[10.5px] font-semibold transition-colors cursor-pointer border',
+            activeDisclosure === 'reasoning'
+              ? 'bg-slate-900 text-white border-slate-950'
+              : 'bg-slate-50 text-slate-600 border-slate-100 hover:bg-slate-100'
+          )}
+        >
+          Show reasoning
+        </button>
+        <button
+          onClick={() => toggleDisclosure('sources')}
+          className={cn(
+            'px-2.5 py-1 rounded-xl text-[10.5px] font-semibold transition-colors cursor-pointer border',
+            activeDisclosure === 'sources'
+              ? 'bg-slate-900 text-white border-slate-950'
+              : 'bg-slate-50 text-slate-600 border-slate-100 hover:bg-slate-100'
+          )}
+        >
+          Show sources
+        </button>
+        <button
+          onClick={() => toggleDisclosure('why')}
+          className={cn(
+            'px-2.5 py-1 rounded-xl text-[10.5px] font-semibold transition-colors cursor-pointer border',
+            activeDisclosure === 'why'
+              ? 'bg-slate-900 text-white border-slate-950'
+              : 'bg-slate-50 text-slate-600 border-slate-100 hover:bg-slate-100'
+          )}
+        >
+          Why this matters
+        </button>
+      </div>
+
+      {/* Progressive Disclosure Content Areas */}
+      {activeDisclosure && (
+        <div className="relative z-10 pl-1">
+          {activeDisclosure === 'reasoning' && (
+            <p className="text-xs sm:text-[12.5px] text-slate-600 leading-relaxed bg-slate-50 border border-slate-100 p-3 rounded-xl animate-fadeIn font-normal">
+              I synthesized connected Gmail messages, calendar timelines, and documents matching Project Alpha. Rahul recently requested a Friday spec delivery, but the active scope brief lists Monday, highlighting a core schedule mismatch before the Monday sync.
+            </p>
+          )}
+
+          {activeDisclosure === 'sources' && (
+            <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 animate-fadeIn space-y-2">
+              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block">
+                Evidence Files
+              </span>
+              <div className="flex flex-col gap-1.5">
+                {data.sources.map((src) => (
+                  <button
+                    key={src.id}
+                    onClick={() => onSelectSource(src)}
+                    className="w-full text-left p-2 rounded-lg bg-white border border-slate-100 hover:border-indigo-200 hover:text-indigo-600 transition-colors text-xs font-medium flex items-center justify-between gap-3 cursor-pointer"
+                  >
+                    <span className="truncate">{src.connectorName}: {src.title}</span>
+                    <span className="text-[10px] text-slate-400 font-normal shrink-0 font-mono">{src.timestamp}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeDisclosure === 'why' && (
+            <p className="text-xs sm:text-[12.5px] text-slate-600 leading-relaxed bg-slate-50 border border-slate-100 p-3 rounded-xl animate-fadeIn font-normal">
+              Resolving this prevents client friction or delivery delays. Conflicting dates across active folders leads to team planning drift, making alignment the highest immediate priority.
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Findings - Open Vertical List with Subtle Separators */}
       {data.insights && data.insights.length > 0 && (
@@ -79,20 +151,16 @@ export const AIResponse: React.FC<AIResponseProps> = ({
         </div>
       )}
 
-      {/* Recommended Next Step - Compact Horizontal Bar */}
+      {/* Recommended Next Step - Subtle Blue-Violet AI Surface */}
       {data.recommendedNextStep && (
-        <div className="relative z-10 p-3 sm:p-3.5 rounded-xl bg-indigo-50/50 border border-indigo-100/40 text-slate-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-none">
-          <div className="space-y-0.5">
-            <span className="text-[9px] font-bold text-indigo-600 uppercase tracking-widest block">
-              Recommended Next Step
-            </span>
-            <span className="text-xs font-semibold text-slate-800">
-              {data.recommendedNextStep.text}
+        <div className="relative z-10 p-3.5 rounded-xl bg-indigo-50/40 border border-indigo-100/30 text-xs flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <span className="h-1.5 w-1.5 rounded-full bg-indigo-600 shrink-0" />
+            <span className="font-semibold text-slate-800">
+              Recommended: <span className="text-slate-600 font-normal">{data.recommendedNextStep.text}</span>
             </span>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
+          <button
             onClick={() =>
               onSelectFollowUp(
                 data.recommendedNextStep?.actionLabel === 'Prepare response'
@@ -100,25 +168,16 @@ export const AIResponse: React.FC<AIResponseProps> = ({
                   : `Execute recommended action: ${data.recommendedNextStep?.text}`
               )
             }
-            rightIcon={<ArrowRight className="h-3 w-3" />}
-            className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-100/50 text-[11px] font-semibold h-7 px-2.5 shrink-0 rounded-lg transition-colors"
+            className="text-[11px] font-bold text-indigo-600 hover:text-indigo-700 transition-colors shrink-0 flex items-center gap-1 cursor-pointer border-0 bg-transparent"
           >
-            {data.recommendedNextStep.actionLabel || 'Prepare response'} →
-          </Button>
+            <span>{data.recommendedNextStep.actionLabel || 'Prepare response'}</span>
+            <ArrowRight className="h-3.5 w-3.5" />
+          </button>
         </div>
       )}
 
       {/* Suggested Follow-ups */}
       <FollowUpSuggestions onSelectFollowUp={onSelectFollowUp} />
-
-      {/* Why Explanation Modal */}
-      <WhyPanel
-        isOpen={isWhyOpen}
-        onClose={() => setIsWhyOpen(false)}
-        whyExplanation={data.whyExplanation}
-        sources={data.sources}
-        onSelectSource={onSelectSource}
-      />
     </div>
   );
 };

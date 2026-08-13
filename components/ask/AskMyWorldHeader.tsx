@@ -19,64 +19,50 @@ export const AskMyWorldHeader: React.FC<AskMyWorldHeaderProps> = ({
   onToggleHistory,
   onToggleContextPanel,
   isContextPanelOpen = true,
-  activeConversationTitle,
   className,
 }) => {
   return (
     <div
       className={cn(
-        'flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/60 pb-3',
+        'flex flex-row items-center justify-between border-b border-slate-100 pb-4',
         className
       )}
     >
-      <div className="space-y-1">
-        <div className="flex items-center gap-2 flex-wrap">
-          <h1 className="text-lg sm:text-xl font-bold tracking-tight text-slate-900">
-            Ask My World
-          </h1>
-          <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50/70 border border-indigo-100/40 px-2 py-0.5 rounded">
-            <Sparkles className="h-3 w-3 text-indigo-500 fill-indigo-500" />
-            <span>Workspace Reasoning</span>
-          </span>
-        </div>
-        <p className="text-[11px] sm:text-xs text-slate-500 font-medium">
-          Workspace context: <span className="text-slate-800 font-semibold">{activeConversationTitle ? activeConversationTitle : "Global Connected Workspace"}</span> · Active context loaded
+      <div className="space-y-0.5">
+        <h1 className="text-base sm:text-lg font-bold tracking-tight text-slate-900 font-sans">
+          Ask My World
+        </h1>
+        <p className="text-[11px] sm:text-xs text-slate-500 font-medium tracking-tight">
+          Talk to your world.
         </p>
       </div>
 
-      <div className="flex items-center gap-2 shrink-0">
-        <Button
-          variant="outline"
-          size="sm"
+      <div className="flex items-center gap-1.5 shrink-0">
+        <button
           onClick={onToggleHistory}
-          leftIcon={<History className="h-3.5 w-3.5 text-slate-600" />}
-          className="text-xs h-7.5 px-2.5 bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+          className="px-2.5 py-1.5 rounded-xl text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors bg-transparent border-0 cursor-pointer"
         >
           History
-        </Button>
+        </button>
 
-        <Button
-          variant="outline"
-          size="sm"
+        <button
           onClick={onToggleContextPanel}
-          leftIcon={<PanelRight className="h-3.5 w-3.5 text-slate-600" />}
           className={cn(
-            'text-xs h-7.5 px-2.5 bg-white border-slate-200 text-slate-700 hover:bg-slate-50',
-            isContextPanelOpen && 'border-indigo-300 bg-indigo-50/50 text-indigo-900 font-medium'
+            'px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-colors border-0 cursor-pointer',
+            isContextPanelOpen
+              ? 'text-indigo-600 bg-indigo-50/50'
+              : 'text-slate-500 hover:text-slate-900'
           )}
         >
           Context
-        </Button>
+        </button>
 
-        <Button
-          variant="primary"
-          size="sm"
+        <button
           onClick={onNewConversation}
-          leftIcon={<Plus className="h-3.5 w-3.5" />}
-          className="text-xs h-7.5 px-3 font-medium bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg shadow-2xs"
+          className="px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-950 text-indigo-100 hover:bg-indigo-900 transition-all cursor-pointer shadow-sm ml-1"
         >
           New Chat
-        </Button>
+        </button>
       </div>
     </div>
   );

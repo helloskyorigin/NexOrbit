@@ -80,8 +80,8 @@ export const AskComposer: React.FC<AskComposerProps> = ({
         className={cn(
           'relative rounded-2xl transition-all duration-300',
           isFocused
-            ? 'shadow-[0_0_20px_-3px_rgba(99,102,241,0.18)] bg-white border border-indigo-400/80'
-            : 'border border-slate-200/80 bg-white/70 hover:bg-white hover:border-slate-300'
+            ? 'shadow-[0_0_20px_-3px_rgba(99,102,241,0.18)] bg-white border border-indigo-300'
+            : 'border border-indigo-100 bg-white/70 hover:bg-white hover:border-indigo-200'
         )}
       >
         {/* Soft traveling light animated overlay on focus */}
@@ -131,7 +131,7 @@ export const AskComposer: React.FC<AskComposerProps> = ({
                 <Mic className="h-3.5 w-3.5" />
               </button>
 
-              {/* Deep Research Toggle */}
+              {/* Research Toggle */}
               <button
                 onClick={() => setIsDeepResearch(!isDeepResearch)}
                 className={cn(
@@ -142,7 +142,7 @@ export const AskComposer: React.FC<AskComposerProps> = ({
                 )}
               >
                 <Globe className="h-3 w-3" />
-                <span>Deep Research</span>
+                <span>Research</span>
               </button>
             </div>
 

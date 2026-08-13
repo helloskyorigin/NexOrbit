@@ -32,15 +32,15 @@ export const ContextPanel: React.FC<ContextPanelProps> = ({ onClose, className }
       case 'project':
         return <Folder className="h-3.5 w-3.5 text-indigo-600" />;
       case 'person':
-        return <User className="h-3.5 w-3.5 text-sky-600" />;
+        return <User className="h-3.5 w-3.5 text-slate-600" />;
       case 'email':
-        return <Mail className="h-3.5 w-3.5 text-rose-500" />;
+        return <Mail className="h-3.5 w-3.5 text-slate-500" />;
       case 'event':
-        return <Calendar className="h-3.5 w-3.5 text-indigo-500" />;
+        return <Calendar className="h-3.5 w-3.5 text-slate-500" />;
       case 'doc':
-        return <FileText className="h-3.5 w-3.5 text-amber-500" />;
+        return <FileText className="h-3.5 w-3.5 text-slate-500" />;
       default:
-        return <Layers className="h-3.5 w-3.5 text-slate-500" />;
+        return <Layers className="h-3.5 w-3.5 text-slate-400" />;
     }
   };
 
@@ -48,31 +48,47 @@ export const ContextPanel: React.FC<ContextPanelProps> = ({ onClose, className }
   const otherEntities = CONTEXT_ENTITIES.filter(e => e.type !== 'project');
  
   return (
-    <div className={cn('p-4 space-y-5 text-xs select-none', className)}>
+    <div className={cn('p-4 space-y-6 text-xs select-none font-sans', className)}>
       {/* Header */}
-      <div className="flex items-center justify-between pb-3 border-b border-slate-100/80">
+      <div className="flex items-center justify-between pb-3 border-b border-slate-100">
         <div>
-          <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-            Why NEXORBIT knows this
+          <h3 className="text-[11px] font-bold text-slate-900 tracking-tight">
+            Context
           </h3>
-          <p className="text-xs font-bold text-slate-900 mt-0.5">Workspace Synthesis</p>
+          <p className="text-[10px] text-slate-400 font-medium mt-0.5 leading-snug">
+            What NEXORBIT used to understand this
+          </p>
         </div>
  
         {onClose && (
           <button
             onClick={onClose}
-            className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100/60 transition-colors cursor-pointer"
+            className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
           >
             <X className="h-3.5 w-3.5" />
           </button>
         )}
       </div>
 
+      {/* Subtle relationship lines / orbital curves diagram (Ambient Connection Graph) */}
+      <div className="py-3 px-3 rounded-xl bg-slate-50/50 border border-slate-100/50 flex flex-col items-center justify-center space-y-1.5 pointer-events-none">
+        <span className="text-[9px] font-bold text-indigo-500 uppercase tracking-widest block">
+          Relationship Web
+        </span>
+        <div className="flex items-center gap-1.5 font-mono text-[10px] text-slate-400 select-none">
+          <span className="text-slate-700 font-semibold">Project Alpha</span>
+          <span>↘</span>
+          <span className="text-slate-600 font-medium">Rahul</span>
+          <span>↙</span>
+          <span className="text-slate-500">Emails</span>
+        </div>
+      </div>
+
       {/* Main Context - Active Focus */}
       {projectEntity && (
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           <span className="text-[9px] font-bold text-indigo-600 uppercase tracking-widest block">
-            Active Workspace
+            Workspace Focus
           </span>
           <div className="group space-y-1.5">
             <button
@@ -101,7 +117,7 @@ export const ContextPanel: React.FC<ContextPanelProps> = ({ onClose, className }
             </button>
 
             {expandedIds[projectEntity.id] && (
-              <div className="pl-6 pt-0.5 space-y-1.5 text-[11px] text-slate-500 animate-fadeIn">
+              <div className="pl-6 pt-0.5 space-y-1.5 text-[11px] text-slate-500 animate-fadeIn font-normal">
                 {projectEntity.details.map((detail, idx) => (
                   <div key={idx} className="flex items-center gap-2 leading-relaxed">
                     <span className="h-1 w-1 rounded-full bg-indigo-400 shrink-0" />
@@ -115,9 +131,9 @@ export const ContextPanel: React.FC<ContextPanelProps> = ({ onClose, className }
       )}
 
       {/* Related People & Content */}
-      <div className="space-y-3.5 pt-3 border-t border-slate-100/80">
+      <div className="space-y-3 pt-4 border-t border-slate-100">
         <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block">
-          Related People & Content
+          Related Context
         </span>
         
         <div className="space-y-4">
@@ -152,7 +168,7 @@ export const ContextPanel: React.FC<ContextPanelProps> = ({ onClose, className }
                 </button>
 
                 {isExpanded && (
-                  <div className="pl-6 pt-0.5 space-y-1.5 text-[11px] text-slate-500 animate-fadeIn">
+                  <div className="pl-6 pt-0.5 space-y-1.5 text-[11px] text-slate-500 animate-fadeIn font-normal">
                     {entity.details.map((detail, idx) => (
                       <div key={idx} className="flex items-center gap-2 leading-relaxed">
                         <span className="h-1 w-1 rounded-full bg-slate-300 shrink-0" />
