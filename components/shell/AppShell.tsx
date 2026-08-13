@@ -11,6 +11,9 @@ import { AskMyWorldView } from '../ask/AskMyWorldView';
 import { GoalsView } from '../goals/GoalsView';
 import { MemoryView } from '../memory/MemoryView';
 import { ConnectedAppsView } from '../connectors/ConnectedAppsView';
+import { WhatChangedView } from '../changes/WhatChangedView';
+import { CleanMyDayView } from '../focus/CleanMyDayView';
+import { SettingsView } from '../settings/SettingsView';
 import { Drawer } from '../ui/Drawer';
 import { Terminal, Palette, Sparkles } from 'lucide-react';
 import { Badge } from '../ui/Badge';
@@ -109,10 +112,16 @@ export const AppShell: React.FC<AppShellProps> = ({
                 onNavigate={handleSelectPage}
                 onOpenConnector={(id) => setActiveConnectorId(id)}
               />
+            ) : activePage === 'what-changed' ? (
+              <WhatChangedView onNavigate={handleSelectPage} />
+            ) : activePage === 'clean-my-day' ? (
+              <CleanMyDayView onNavigate={handleSelectPage} />
             ) : activePage === 'goals' ? (
               <GoalsView onNavigate={handleSelectPage} />
             ) : activePage === 'memory' ? (
               <MemoryView onNavigate={handleSelectPage} />
+            ) : activePage === 'settings' ? (
+              <SettingsView onNavigate={handleSelectPage} />
             ) : activePage === 'connected-apps' || activePage === 'connectors' ? (
               <ConnectedAppsView
                 onNavigate={handleSelectPage}
