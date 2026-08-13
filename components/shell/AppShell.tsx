@@ -28,7 +28,7 @@ export interface AppShellProps {
 export const AppShell: React.FC<AppShellProps> = ({
   initialPage = 'home',
   children,
-  showDevTabOption = true,
+  showDevTabOption = false,
 }) => {
   const [activePage, setActivePage] = useState<string>(() => {
     if (typeof window !== 'undefined' && window.location.hash) {
@@ -99,7 +99,7 @@ export const AppShell: React.FC<AppShellProps> = ({
           )}
 
           {/* Main Content Area Container */}
-          <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+          <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-4 sm:py-6">
             {children ? (
               children
             ) : activePage === 'home' ? (

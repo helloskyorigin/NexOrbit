@@ -164,39 +164,37 @@ export const AICommandInput: React.FC<AICommandInputProps> = ({
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           disabled={disabled || isLoading}
-          rows={3}
-          className="w-full px-4 pt-3.5 pb-2 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 bg-transparent resize-none focus:outline-none disabled:opacity-50"
+          rows={2}
+          className="w-full px-4 pt-3 pb-1.5 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 bg-transparent resize-none focus:outline-none disabled:opacity-50 font-sans"
         />
 
         {/* Toolbar Controls */}
-        <div className="px-3 pb-3 pt-1 flex items-center justify-between border-t border-slate-100/60">
+        <div className="px-3 pb-2 pt-1 flex items-center justify-between border-t border-slate-100/60">
           <div className="flex items-center gap-1">
-            <IconButton
-              icon={<Paperclip className="h-4 w-4" />}
-              label="Attach file or context"
-              variant="ghost"
-              size="sm"
+            <button
+              type="button"
               onClick={handleMockAttachment}
               disabled={disabled || isLoading}
-              className="text-slate-500 hover:text-slate-800"
-            />
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors"
+            >
+              <Paperclip className="h-3.5 w-3.5" />
+              <span>Attach</span>
+            </button>
 
-            <IconButton
-              icon={
-                <Mic
-                  className={cn('h-4 w-4', isVoiceActive && 'text-red-500 animate-pulse')}
-                />
-              }
-              label={isVoiceActive ? 'Stop recording voice' : 'Start voice command'}
-              variant={isVoiceActive ? 'secondary' : 'ghost'}
-              size="sm"
+            <button
+              type="button"
               onClick={() => setIsVoiceActive(!isVoiceActive)}
               disabled={disabled || isLoading}
               className={cn(
-                'text-slate-500 hover:text-slate-800',
-                isVoiceActive && 'bg-red-50 text-red-600 border border-red-200'
+                'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors',
+                isVoiceActive
+                  ? 'bg-red-50 text-red-600 border border-red-200'
+                  : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
               )}
-            />
+            >
+              <Mic className={cn('h-3.5 w-3.5', isVoiceActive && 'animate-pulse')} />
+              <span>Voice</span>
+            </button>
 
             <button
               type="button"
@@ -225,14 +223,14 @@ export const AICommandInput: React.FC<AICommandInputProps> = ({
               disabled={(!textValue.trim() && attachedFiles.length === 0) || isLoading || disabled}
               aria-label="Send prompt to NEXORBIT"
               className={cn(
-                'inline-flex items-center justify-center h-8 w-8 rounded-xl bg-slate-900 text-white transition-all duration-150 shadow-xs',
+                'inline-flex items-center justify-center h-7.5 w-7.5 rounded-xl bg-slate-900 text-white transition-all duration-150 shadow-2xs',
                 'hover:bg-slate-800 active:bg-slate-950 disabled:opacity-40 disabled:pointer-events-none'
               )}
             >
               {isLoading ? (
-                <Sparkles className="h-4 w-4 animate-spin text-white" />
+                <Sparkles className="h-3.5 w-3.5 animate-spin text-white" />
               ) : (
-                <ArrowUp className="h-4 w-4 stroke-[2.5]" />
+                <ArrowUp className="h-3.5 w-3.5 stroke-[2.5]" />
               )}
             </button>
           </div>
@@ -242,7 +240,6 @@ export const AICommandInput: React.FC<AICommandInputProps> = ({
       {/* Quick Prompts */}
       {suggestedPrompts.length > 0 && (
         <div className="flex flex-wrap items-center gap-1.5 px-0.5">
-          <span className="text-xs text-slate-400 font-medium mr-1">Suggestions:</span>
           {suggestedPrompts.map((prompt, idx) => (
             <button
               key={idx}
@@ -254,7 +251,7 @@ export const AICommandInput: React.FC<AICommandInputProps> = ({
                   setInternalValue(prompt);
                 }
               }}
-              className="text-xs text-slate-600 bg-white border border-slate-200/80 hover:border-slate-300 hover:bg-slate-50 px-2.5 py-1 rounded-full transition-all duration-150 truncate max-w-[280px]"
+              className="text-[11px] font-medium text-slate-500 hover:text-slate-800 bg-slate-100/70 hover:bg-slate-200/60 px-2.5 py-0.5 rounded-full border border-slate-200/50 transition-all duration-150 truncate max-w-[280px] cursor-pointer"
             >
               {prompt}
             </button>

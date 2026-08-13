@@ -56,7 +56,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   return (
     <header
       className={cn(
-        'sticky top-0 z-10 h-16 bg-white/90 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between transition-all duration-200',
+        'sticky top-0 z-10 h-14 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between transition-all duration-200',
         className
       )}
     >

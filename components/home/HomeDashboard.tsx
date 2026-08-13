@@ -79,14 +79,14 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
   };
 
   return (
-    <div className="space-y-4 animate-fadeIn pb-6 max-w-7xl mx-auto">
+    <div className="space-y-4 animate-fadeIn pb-6 max-w-5xl mx-auto">
       {/* 1. TOP AREA */}
-      <div className="flex items-center justify-between border-b border-slate-200/80 pb-2.5">
+      <div className="flex items-center justify-between border-b border-slate-200/60 pb-2">
         <div className="space-y-0.5">
-          <h1 className="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900">
+          <h1 className="text-base sm:text-lg font-bold tracking-tight text-slate-900">
             Good morning, Satyam 👋
           </h1>
-          <p className="text-xs text-slate-500 font-medium">
+          <p className="text-xs text-slate-500 font-normal">
             Here&apos;s what matters in your world today.
           </p>
         </div>
@@ -152,14 +152,14 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
       </div>
 
       {/* 3. SUMMARY STRIP */}
-      <div className="flex flex-wrap items-center gap-2 sm:gap-6 py-2 px-1 text-xs text-slate-600 border-y border-slate-200/70 font-medium">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-6 py-2 px-3 bg-white border border-slate-200/80 rounded-xl text-xs text-slate-600 font-medium shadow-2xs">
         <button
           onClick={() => onNavigate('clean-my-day')}
           className="flex items-center gap-1.5 hover:text-indigo-600 transition-colors group cursor-pointer"
         >
           <span className="h-2 w-2 rounded-full bg-amber-500 shrink-0" />
-          <span className="font-extrabold text-slate-900 group-hover:text-indigo-600">2</span>
-          <span>Need attention</span>
+          <span className="font-semibold text-slate-900 group-hover:text-indigo-600">2</span>
+          <span className="text-slate-500 text-xs">Need attention</span>
         </button>
 
         <span className="text-slate-300 hidden sm:inline">•</span>
@@ -169,146 +169,148 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
           className="flex items-center gap-1.5 hover:text-indigo-600 transition-colors group cursor-pointer"
         >
           <span className="h-2 w-2 rounded-full bg-indigo-500 shrink-0" />
-          <span className="font-extrabold text-slate-900 group-hover:text-indigo-600">3</span>
-          <span>Changed</span>
+          <span className="font-semibold text-slate-900 group-hover:text-indigo-600">3</span>
+          <span className="text-slate-500 text-xs">Changed</span>
         </button>
 
         <span className="text-slate-300 hidden sm:inline">•</span>
 
         <div className="flex items-center gap-1.5">
           <span className="h-2 w-2 rounded-full bg-sky-500 shrink-0" />
-          <span className="font-extrabold text-slate-900">2</span>
-          <span>Upcoming</span>
+          <span className="font-semibold text-slate-900">2</span>
+          <span className="text-slate-500 text-xs">Upcoming</span>
         </div>
 
         <span className="text-slate-300 hidden sm:inline">•</span>
 
         <div className="flex items-center gap-1.5">
           <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
-          <span className="font-extrabold text-slate-900">6</span>
-          <span>Completed</span>
+          <span className="font-semibold text-slate-900">6</span>
+          <span className="text-slate-500 text-xs">Completed</span>
         </div>
       </div>
 
       {/* 4. MAIN CONTENT (TWO COLUMNS) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start pt-1">
-        {/* LEFT COLUMN: TODAY'S FOCUS */}
-        <div className="space-y-3.5">
-          <div className="space-y-0.5">
-            <h3 className="text-sm font-extrabold text-slate-900 tracking-tight">
-              Today&apos;s Focus
-            </h3>
-            <p className="text-xs text-slate-500 font-medium">
-              Things that may need your attention.
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            {/* Item 1 */}
-            <div className="p-3 rounded-xl bg-white border border-slate-200/90 shadow-2xs hover:border-indigo-200 transition-all flex items-start justify-between gap-3">
-              <div className="space-y-0.5 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-amber-500 shrink-0" />
-                  <h4 className="text-xs font-bold text-slate-900 truncate">
-                    Deadline conflict detected
-                  </h4>
-                </div>
-                <p className="text-xs text-slate-600 font-medium leading-relaxed pl-4">
-                  Project Alpha has different dates across your connected sources.
-                </p>
-              </div>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  setActiveModalItem({
-                    id: '1',
-                    title: 'Deadline conflict detected',
-                    description:
-                      'Project Alpha deadline is Friday 5:00 PM in Gmail, but Google Calendar has a meeting conflict at 4:30 PM.',
-                    type: 'deadline',
-                  })
-                }
-                className="text-xs font-semibold h-7 px-2.5 shrink-0 bg-slate-50 hover:bg-slate-100 border-slate-200"
-              >
-                Review
-              </Button>
+        {/* LEFT COLUMN: TODAY'S FOCUS & CLEAN MY DAY */}
+        <div className="space-y-4">
+          <div className="space-y-2.5">
+            <div className="space-y-0.5">
+              <h3 className="text-sm font-semibold text-slate-900 tracking-tight">
+                Today&apos;s Focus
+              </h3>
+              <p className="text-xs text-slate-500 font-normal">
+                Things that may need your attention.
+              </p>
             </div>
 
-            {/* Item 2 */}
-            <div className="p-3 rounded-xl bg-white border border-slate-200/90 shadow-2xs hover:border-indigo-200 transition-all flex items-start justify-between gap-3">
-              <div className="space-y-0.5 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-indigo-500 shrink-0" />
-                  <h4 className="text-xs font-bold text-slate-900 truncate">
-                    Client hasn&apos;t replied
-                  </h4>
+            <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs divide-y divide-slate-100 overflow-hidden">
+              {/* Item 1 */}
+              <div className="p-3.5 hover:bg-slate-50/50 transition-colors flex items-center justify-between gap-3">
+                <div className="space-y-0.5 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full bg-amber-500 shrink-0" />
+                    <h4 className="text-xs font-semibold text-slate-900 truncate">
+                      Deadline conflict detected
+                    </h4>
+                  </div>
+                  <p className="text-xs text-slate-500 leading-relaxed pl-4">
+                    Project Alpha has different dates across your connected sources.
+                  </p>
                 </div>
-                <p className="text-xs text-slate-600 font-medium leading-relaxed pl-4">
-                  Rahul hasn&apos;t replied to your recent conversation.
-                </p>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setActiveModalItem({
+                      id: '1',
+                      title: 'Deadline conflict detected',
+                      description:
+                        'Project Alpha deadline is Friday 5:00 PM in Gmail, but Google Calendar has a meeting conflict at 4:30 PM.',
+                      type: 'deadline',
+                    })
+                  }
+                  className="text-xs font-medium h-7 px-2.5 shrink-0 bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700"
+                >
+                  Review
+                </Button>
               </div>
 
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  setActiveModalItem({
-                    id: '2',
-                    title: 'Client hasn\'t replied',
-                    description:
-                      'Last message sent 24 hours ago regarding Phase 1 security sign-off. Click Open to generate follow-up draft.',
-                    type: 'client',
-                  })
-                }
-                className="text-xs font-semibold h-7 px-2.5 shrink-0 bg-slate-50 hover:bg-slate-100 border-slate-200"
-              >
-                Open
-              </Button>
-            </div>
-
-            {/* Item 3 */}
-            <div className="p-3 rounded-xl bg-white border border-slate-200/90 shadow-2xs hover:border-indigo-200 transition-all flex items-start justify-between gap-3">
-              <div className="space-y-0.5 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-sky-500 shrink-0" />
-                  <h4 className="text-xs font-bold text-slate-900 truncate">
-                    Meeting tomorrow
-                  </h4>
+              {/* Item 2 */}
+              <div className="p-3.5 hover:bg-slate-50/50 transition-colors flex items-center justify-between gap-3">
+                <div className="space-y-0.5 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full bg-indigo-500 shrink-0" />
+                    <h4 className="text-xs font-semibold text-slate-900 truncate">
+                      Client hasn&apos;t replied
+                    </h4>
+                  </div>
+                  <p className="text-xs text-slate-500 leading-relaxed pl-4">
+                    Rahul hasn&apos;t replied to your recent conversation.
+                  </p>
                 </div>
-                <p className="text-xs text-slate-600 font-medium leading-relaxed pl-4">
-                  Project Alpha sync at 10:00 AM.
-                </p>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setActiveModalItem({
+                      id: '2',
+                      title: 'Client hasn\'t replied',
+                      description:
+                        'Last message sent 24 hours ago regarding Phase 1 security sign-off. Click Open to generate follow-up draft.',
+                      type: 'client',
+                    })
+                  }
+                  className="text-xs font-medium h-7 px-2.5 shrink-0 bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700"
+                >
+                  Open
+                </Button>
               </div>
 
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  setActiveModalItem({
-                    id: '3',
-                    title: 'Meeting tomorrow: Project Alpha Sync',
-                    description:
-                      'Agenda: Q3 Roadmap preview & Alpha spec review with Sarah and Marcus. Click Prepare to synthesize briefing note.',
-                    type: 'meeting',
-                  })
-                }
-                className="text-xs font-semibold h-7 px-2.5 shrink-0 bg-slate-50 hover:bg-slate-100 border-slate-200"
-              >
-                Prepare
-              </Button>
+              {/* Item 3 */}
+              <div className="p-3.5 hover:bg-slate-50/50 transition-colors flex items-center justify-between gap-3">
+                <div className="space-y-0.5 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full bg-sky-500 shrink-0" />
+                    <h4 className="text-xs font-semibold text-slate-900 truncate">
+                      Meeting tomorrow
+                    </h4>
+                  </div>
+                  <p className="text-xs text-slate-500 leading-relaxed pl-4">
+                    Project Alpha sync at 10:00 AM.
+                  </p>
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setActiveModalItem({
+                      id: '3',
+                      title: 'Meeting tomorrow: Project Alpha Sync',
+                      description:
+                        'Agenda: Q3 Roadmap preview & Alpha spec review with Sarah and Marcus. Click Prepare to synthesize briefing note.',
+                      type: 'meeting',
+                    })
+                  }
+                  className="text-xs font-medium h-7 px-2.5 shrink-0 bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700"
+                >
+                  Prepare
+                </Button>
+              </div>
             </div>
           </div>
 
           {/* CLEAN MY DAY SHORTCUT */}
-          <div className="p-3 rounded-xl bg-slate-900 text-white flex items-center justify-between gap-3 shadow-2xs">
+          <div className="p-3.5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs flex items-center justify-between gap-3">
             <div className="space-y-0.5">
-              <h4 className="text-xs font-extrabold text-white flex items-center gap-1.5">
-                <Sparkles className="h-3.5 w-3.5 text-indigo-400" />
-                <span>Clean My Day</span>
+              <h4 className="text-xs font-semibold text-slate-900 flex items-center gap-1.5">
+                <Sparkles className="h-3.5 w-3.5 text-indigo-600" />
+                <span>Need a clearer day?</span>
               </h4>
-              <p className="text-[11px] text-slate-300 font-medium">
+              <p className="text-xs text-slate-500 font-normal">
                 See what matters most today.
               </p>
             </div>
@@ -317,9 +319,9 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
               variant="primary"
               size="sm"
               onClick={() => onNavigate('clean-my-day')}
-              className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold h-8 px-3 shrink-0"
+              className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium h-7.5 px-3 shrink-0 rounded-lg"
             >
-              Clean My Day →
+              ✨ Clean My Day
             </Button>
           </div>
         </div>
@@ -329,32 +331,32 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
           {/* WHAT CHANGED */}
           <div className="space-y-2.5">
             <div className="space-y-0.5">
-              <h3 className="text-sm font-extrabold text-slate-900 tracking-tight">
+              <h3 className="text-sm font-semibold text-slate-900 tracking-tight">
                 What changed
               </h3>
-              <p className="text-xs text-slate-500 font-medium">
+              <p className="text-xs text-slate-500 font-normal">
                 Important updates since your last visit.
               </p>
             </div>
 
-            <div className="p-3 rounded-xl bg-white border border-slate-200/90 shadow-2xs space-y-2 text-xs text-slate-700">
-              <div className="flex items-center gap-2 font-medium">
+            <div className="p-3.5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs space-y-2 text-xs text-slate-700">
+              <div className="flex items-center gap-2 font-normal">
                 <MessageSquare className="h-3.5 w-3.5 text-indigo-600 shrink-0" />
-                <span><strong>3</strong> important conversations</span>
+                <span><strong className="font-semibold text-slate-900">3</strong> important conversations</span>
               </div>
-              <div className="flex items-center gap-2 font-medium">
+              <div className="flex items-center gap-2 font-normal">
                 <CalendarIcon className="h-3.5 w-3.5 text-blue-600 shrink-0" />
-                <span><strong>1</strong> meeting rescheduled</span>
+                <span><strong className="font-semibold text-slate-900">1</strong> meeting rescheduled</span>
               </div>
-              <div className="flex items-center gap-2 font-medium">
+              <div className="flex items-center gap-2 font-normal">
                 <FileText className="h-3.5 w-3.5 text-amber-600 shrink-0" />
-                <span><strong>2</strong> files updated</span>
+                <span><strong className="font-semibold text-slate-900">2</strong> files updated</span>
               </div>
 
-              <div className="pt-1.5 border-t border-slate-100 flex justify-end">
+              <div className="pt-2 border-t border-slate-100 flex justify-end">
                 <button
                   onClick={() => onNavigate('what-changed')}
-                  className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 transition-colors"
+                  className="text-xs font-medium text-indigo-600 hover:text-indigo-800 flex items-center gap-1 transition-colors"
                 >
                   <span>View all changes</span>
                   <ChevronRight className="h-3.5 w-3.5" />
@@ -366,34 +368,37 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
           {/* TODAY'S AGENDA */}
           <div className="space-y-2.5">
             <div className="space-y-0.5">
-              <h3 className="text-sm font-extrabold text-slate-900 tracking-tight">
+              <h3 className="text-sm font-semibold text-slate-900 tracking-tight">
                 Today&apos;s Agenda
               </h3>
+              <p className="text-xs text-slate-500 font-normal">
+                Scheduled events for today.
+              </p>
             </div>
 
-            <div className="p-3 rounded-xl bg-white border border-slate-200/90 shadow-2xs space-y-1.5 text-xs">
-              <div className="flex items-center justify-between py-1 border-b border-slate-100">
-                <span className="font-mono text-slate-400 font-semibold text-[11px]">10:00</span>
-                <span className="font-bold text-slate-900">Project Alpha Sync</span>
+            <div className="p-3.5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs space-y-2 text-xs">
+              <div className="flex items-center justify-between py-0.5 border-b border-slate-100 pb-1.5">
+                <span className="font-mono text-slate-400 font-medium text-[11px]">10:00</span>
+                <span className="font-semibold text-slate-900">Project Alpha Sync</span>
                 <Badge variant="indigo" size="sm" className="text-[10px]">Upcoming</Badge>
               </div>
 
-              <div className="flex items-center justify-between py-1 border-b border-slate-100">
-                <span className="font-mono text-slate-400 font-semibold text-[11px]">13:30</span>
-                <span className="font-bold text-slate-900">Product Review</span>
+              <div className="flex items-center justify-between py-0.5 border-b border-slate-100 pb-1.5">
+                <span className="font-mono text-slate-400 font-medium text-[11px]">13:30</span>
+                <span className="font-semibold text-slate-900">Product Review</span>
                 <Badge variant="default" size="sm" className="text-[10px]">Calendar</Badge>
               </div>
 
-              <div className="flex items-center justify-between py-1">
-                <span className="font-mono text-slate-400 font-semibold text-[11px]">16:00</span>
-                <span className="font-bold text-slate-900">Planning</span>
+              <div className="flex items-center justify-between py-0.5">
+                <span className="font-mono text-slate-400 font-medium text-[11px]">16:00</span>
+                <span className="font-semibold text-slate-900">Planning</span>
                 <Badge variant="default" size="sm" className="text-[10px]">Calendar</Badge>
               </div>
 
-              <div className="pt-1 border-t border-slate-100 flex justify-end">
+              <div className="pt-2 border-t border-slate-100 flex justify-end">
                 <button
                   onClick={() => onOpenConnector('calendar')}
-                  className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 transition-colors"
+                  className="text-xs font-medium text-indigo-600 hover:text-indigo-800 flex items-center gap-1 transition-colors"
                 >
                   <span>View calendar</span>
                   <ChevronRight className="h-3.5 w-3.5" />
