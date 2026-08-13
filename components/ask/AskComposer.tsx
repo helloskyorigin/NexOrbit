@@ -71,29 +71,47 @@ export const AskComposer: React.FC<AskComposerProps> = ({
     });
   };
 
+  const [isFocused, setIsFocused] = useState(false);
+
   return (
-    <div className={cn('space-y-2 sticky bottom-0 z-10 bg-slate-50/95 backdrop-blur-md pt-2 pb-1', className)}>
-      {/* NEXORBIT Signature Command-Box Treatment */}
-      <div className="nexorbit-brain-card">
-        <div className="nexorbit-brain-inner p-3 sm:p-3.5 space-y-2.5">
+    <div className={cn('space-y-2 pt-2 pb-1 bg-slate-50/50', className)}>
+      {/* NEXORBIT Signature Command-Box Treatment with Orbit Glow Border Interaction */}
+      <div
+        className={cn(
+          'relative rounded-2xl transition-all duration-300',
+          isFocused
+            ? 'shadow-[0_0_20px_-3px_rgba(99,102,241,0.18)] bg-white border border-indigo-400/80'
+            : 'border border-slate-200/80 bg-white/70 hover:bg-white hover:border-slate-300'
+        )}
+      >
+        {/* Soft traveling light animated overlay on focus */}
+        {isFocused && (
+          <div className="absolute inset-0 p-[1.5px] pointer-events-none rounded-[15px] overflow-hidden">
+            <div className="absolute inset-[-1000%] animate-spin [animation-duration:6s] bg-[conic-gradient(from_90deg_at_50%_50%,rgba(99,102,241,0)_0%,#818cf8_45%,rgba(99,102,241,0.9)_50%,#818cf8_55%,rgba(99,102,241,0)_100%)] opacity-35" />
+          </div>
+        )}
+
+        <div className="relative z-10 p-3 sm:p-3.5 space-y-2.5">
           {/* Multiline Textarea */}
           <textarea
             ref={textareaRef}
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={handleKeyDown}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
             placeholder="Ask anything about your world..."
             rows={1}
-            className="w-full bg-transparent resize-none border-none outline-none text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 font-sans leading-relaxed min-h-[38px] max-h-[160px]"
+            className="w-full bg-transparent resize-none border-none outline-none text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 font-sans leading-relaxed min-h-[38px] max-h-[160px] focus:ring-0"
           />
 
           {/* Action Toolbar */}
-          <div className="flex items-center justify-between gap-2 border-t border-slate-100 pt-2">
+          <div className="flex items-center justify-between gap-2 border-t border-slate-100/60 pt-2">
             <div className="flex items-center gap-1.5">
               {/* Attach Button */}
               <button
                 onClick={handleAttach}
-                className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-slate-100/80 transition-colors"
+                className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-slate-100/80 transition-colors cursor-pointer"
                 title="Attach File"
               >
                 <Paperclip className="h-3.5 w-3.5" />
@@ -103,7 +121,7 @@ export const AskComposer: React.FC<AskComposerProps> = ({
               <button
                 onClick={handleToggleVoice}
                 className={cn(
-                  'p-1.5 rounded-lg transition-colors',
+                  'p-1.5 rounded-lg transition-colors cursor-pointer',
                   isVoiceRecording
                     ? 'bg-red-50 text-red-600 animate-pulse'
                     : 'text-slate-500 hover:text-indigo-600 hover:bg-slate-100/80'
@@ -117,7 +135,7 @@ export const AskComposer: React.FC<AskComposerProps> = ({
               <button
                 onClick={() => setIsDeepResearch(!isDeepResearch)}
                 className={cn(
-                  'px-2.5 py-1 rounded-lg text-[11px] font-medium flex items-center gap-1 transition-colors border',
+                  'px-2.5 py-1 rounded-lg text-[11px] font-medium flex items-center gap-1 transition-colors border cursor-pointer',
                   isDeepResearch
                     ? 'bg-indigo-950 text-indigo-200 border-indigo-800'
                     : 'bg-slate-50 text-slate-600 border-slate-200/80 hover:bg-slate-100'
@@ -136,7 +154,7 @@ export const AskComposer: React.FC<AskComposerProps> = ({
                 onClick={handleSubmit}
                 disabled={!text.trim() || isLoading}
                 leftIcon={<Send className="h-3.5 w-3.5" />}
-                className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs h-7.5 px-3.5 rounded-lg shadow-2xs hover:shadow-xs active:scale-95 transition-all"
+                className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs h-7.5 px-3.5 rounded-lg shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
               >
                 Send
               </Button>

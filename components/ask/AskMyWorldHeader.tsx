@@ -29,20 +29,18 @@ export const AskMyWorldHeader: React.FC<AskMyWorldHeaderProps> = ({
         className
       )}
     >
-      <div className="space-y-0.5">
-        <div className="flex items-center gap-2">
+      <div className="space-y-1">
+        <div className="flex items-center gap-2 flex-wrap">
           <h1 className="text-lg sm:text-xl font-bold tracking-tight text-slate-900">
             Ask My World
           </h1>
-          <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-medium text-indigo-600/90 bg-indigo-50/70 border border-indigo-100 px-2 py-0.5 rounded-full">
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50/70 border border-indigo-100/40 px-2 py-0.5 rounded">
             <Sparkles className="h-3 w-3 text-indigo-500 fill-indigo-500" />
             <span>Workspace Reasoning</span>
           </span>
         </div>
-        <p className="text-xs text-slate-500 font-normal">
-          {activeConversationTitle
-            ? `Active: ${activeConversationTitle}`
-            : 'Ask questions across your connected world.'}
+        <p className="text-[11px] sm:text-xs text-slate-500 font-medium">
+          Workspace context: <span className="text-slate-800 font-semibold">{activeConversationTitle ? activeConversationTitle : "Global Connected Workspace"}</span> · Active context loaded
         </p>
       </div>
 

@@ -26,6 +26,7 @@ import { Badge } from '../ui/Badge';
 import { Mail, Calendar, HardDrive, FileText, ExternalLink, Sparkles } from 'lucide-react';
 import { ConnectorId } from '../shell/ConnectorModal';
 import { useToast } from '../ui/Toast';
+import { cn } from '../../lib/utils';
 
 export interface AskMyWorldViewProps {
   onNavigate?: (pageId: string) => void;
@@ -175,31 +176,33 @@ export const AskMyWorldView: React.FC<AskMyWorldViewProps> = ({
   };
 
   return (
-    <div className="space-y-6 animate-fadeIn pb-12 min-h-[calc(100vh-8rem)] flex flex-col justify-between">
-      {/* 1. Header */}
-      <AskMyWorldHeader
-        onNewConversation={handleNewConversation}
-        onToggleHistory={() => setIsHistoryOpen(true)}
-        onToggleContextPanel={() => setIsContextPanelOpen(!isContextPanelOpen)}
-        isContextPanelOpen={isContextPanelOpen}
-        activeConversationTitle={activeConv?.title}
-      />
+    <div className="h-[calc(100vh-10rem)] lg:h-[calc(100vh-8rem)] flex flex-col overflow-hidden animate-fadeIn space-y-4">
+      {/* 1. Header (Sticky/Fixed) */}
+      <div className="shrink-0">
+        <AskMyWorldHeader
+          onNewConversation={handleNewConversation}
+          onToggleHistory={() => setIsHistoryOpen(true)}
+          onToggleContextPanel={() => setIsContextPanelOpen(!isContextPanelOpen)}
+          isContextPanelOpen={isContextPanelOpen}
+          activeConversationTitle={activeConv?.title}
+        />
+      </div>
 
       {/* 2. Main Body Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 items-start max-w-7xl mx-auto w-full">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 min-h-0 overflow-hidden w-full items-stretch">
         {/* Main Conversation Workspace Column */}
         <div
           className={cn(
-            'flex flex-col min-h-[500px] justify-between space-y-4 w-full transition-all duration-200',
+            'flex flex-col h-full min-h-0 overflow-hidden justify-between space-y-4 w-full transition-all duration-200',
             isContextPanelOpen ? 'lg:col-span-8 xl:col-span-8' : 'lg:col-span-12'
           )}
         >
           {/* Conversation Stream / Empty State */}
-          <div className="flex-1 space-y-4 max-w-3xl mx-auto w-full">
+          <div className="flex-1 overflow-y-auto pr-1.5 space-y-5 w-full max-w-3xl mx-auto min-h-0">
             {!activeConv || activeConv.messages.length === 0 ? (
               <EmptyAskState onSelectSuggestion={handleSendPrompt} />
             ) : (
-              <div className="space-y-6">
+              <div className="space-y-6 py-2">
                 {activeConv.messages.map((msg) =>
                   msg.sender === 'user' ? (
                     <UserMessage key={msg.id} text={msg.text} timestamp={msg.timestamp} />
@@ -222,15 +225,15 @@ export const AskMyWorldView: React.FC<AskMyWorldViewProps> = ({
             )}
           </div>
 
-          {/* Composer at the bottom */}
-          <div className="max-w-3xl mx-auto w-full">
+          {/* Composer at the bottom (Pinned/Fixed) */}
+          <div className="max-w-3xl mx-auto w-full shrink-0 pt-1 bg-slate-50/40">
             <AskComposer onSend={handleSendPrompt} isLoading={isThinking} />
           </div>
         </div>
 
-        {/* Right Context Panel (Desktop Sticky Rail) */}
+        {/* Right Context Panel (Desktop Sticky/Scrollable Rail) */}
         {isContextPanelOpen && (
-          <div className="hidden lg:block lg:col-span-4 xl:col-span-4 sticky top-20">
+          <div className="hidden lg:block lg:col-span-4 xl:col-span-4 h-full overflow-y-auto border-l border-slate-100 pl-4">
             <ContextPanel onClose={() => setIsContextPanelOpen(false)} />
           </div>
         )}

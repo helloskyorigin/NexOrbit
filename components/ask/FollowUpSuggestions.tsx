@@ -14,26 +14,27 @@ export const FollowUpSuggestions: React.FC<FollowUpSuggestionsProps> = ({
   className,
 }) => {
   const suggestions = [
-    { label: 'Show me the sources', prompt: 'Show me the exact source details for this answer.' },
-    { label: "What's the biggest risk?", prompt: 'What is the biggest potential risk identified here?' },
+    { label: 'Show the sources', prompt: 'Show me the exact source details for this answer.' },
+    { label: "What’s the biggest risk?", prompt: 'What is the biggest potential risk identified here?' },
     { label: 'Summarize this', prompt: 'Give me a 2-sentence summary of these insights.' },
   ];
 
   return (
-    <div className={cn('pt-1 space-y-1.5', className)}>
-      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+    <div className={cn('pt-2 space-y-2', className)}>
+      <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400 block pl-1">
         Suggested follow-ups
       </span>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-x-4 gap-y-2 pl-1">
         {suggestions.map((item, i) => (
           <button
             key={i}
             onClick={() => onSelectFollowUp(item.prompt)}
-            className="px-2.5 py-1 rounded-lg bg-slate-100/80 hover:bg-indigo-50 hover:text-indigo-900 border border-slate-200/60 hover:border-indigo-200 text-xs font-medium text-slate-700 transition-all flex items-center gap-1.5 group"
+            className="text-[11px] font-medium text-slate-500 hover:text-indigo-600 transition-colors flex items-center gap-1 cursor-pointer group"
           >
-            <Sparkles className="h-3 w-3 text-indigo-500 shrink-0" />
             <span>{item.label}</span>
-            <ArrowRight className="h-3 w-3 text-slate-400 group-hover:text-indigo-600 transition-colors" />
+            <span className="text-slate-400 group-hover:text-indigo-600 transition-transform group-hover:translate-x-0.5 duration-150">
+              →
+            </span>
           </button>
         ))}
       </div>
