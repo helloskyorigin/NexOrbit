@@ -120,7 +120,6 @@ export abstract class BaseConnector implements GenericConnector {
       };
     }
 
-    // Mock sync foundation for Phase 0
     return {
       connectorType: this.type,
       itemsProcessed: 0,

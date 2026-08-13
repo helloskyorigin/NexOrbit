@@ -25,7 +25,6 @@ export class BrainContextService
     const items = inMemoryStore.queryCollection('contextItems', 'userId', validUserId) as unknown as ContextItem[];
     const evidences = inMemoryStore.queryCollection('evidences', 'userId', validUserId) as unknown as Evidence[];
 
-    // Simple keyword filter foundation
     const filteredItems = items.filter((item) =>
       item.content.toLowerCase().includes(query.query.toLowerCase())
     );

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { NEXORBIT_CONFIG } from '../../../config';
+import { NEXORBIT_CONFIG } from '@/config';
 
 export async function GET() {
   return NextResponse.json({

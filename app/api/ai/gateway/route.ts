@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { AIGatewayService } from '../../../services/ai/ai.gateway';
-import { CreditService } from '../../../services/credits/credit.service';
-import { TaskType } from '../../../types/ai';
-import { OperationType } from '../../../config';
-import { handleApiError } from '../../../lib/errors';
+import { AIGatewayService } from '@/services/ai/ai.gateway';
+import { CreditService } from '@/services/credits/credit.service';
+import { TaskType } from '@/types/ai';
+import { OperationType } from '@/config';
+import { handleApiError } from '@/lib/errors';
 
 const aiGateway = new AIGatewayService();
 const creditService = new CreditService();
@@ -15,7 +15,6 @@ export async function POST(req: NextRequest) {
     const taskType: TaskType = body.taskType || 'ASK_MY_WORLD';
     const prompt = body.prompt || 'Summarize the current system state for NEXORBIT.';
 
-    // Map taskType to OperationType for credit check
     const operationMap: Record<TaskType, OperationType> = {
       ASK_MY_WORLD: 'ASK_MY_WORLD',
       CONNECT_THE_DOTS: 'CONNECT_THE_DOTS',
@@ -31,13 +30,11 @@ export async function POST(req: NextRequest) {
 
     const operation = operationMap[taskType] || 'ASK_MY_WORLD';
 
-    // 1. Server-authoritative credit check & deduction
     const creditResult = await creditService.consumeCredits(userId, operation, {
       taskType,
       promptSnippet: prompt.substring(0, 50),
     });
 
-    // 2. Process AI request via Gateway
     const aiResponse = await aiGateway.processTask({
       userId,
       taskType,

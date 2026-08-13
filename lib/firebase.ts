@@ -16,7 +16,7 @@ export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const googleProvider = new GoogleAuthProvider();
 
-// In-Memory store fallback for server operations during Phase 0 local execution
+// In-Memory store fallback for server operations during Phase 0 & 1 local execution
 class InMemoryStore {
   private collections: Map<string, Map<string, Record<string, unknown>>> = new Map();
 

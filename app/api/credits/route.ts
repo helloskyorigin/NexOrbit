@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { CreditService } from '../../../services/credits/credit.service';
-import { SubscriptionService } from '../../../services/subscription/subscription.service';
-import { handleApiError } from '../../../lib/errors';
-import { OperationType } from '../../../config';
+import { CreditService } from '@/services/credits/credit.service';
+import { SubscriptionService } from '@/services/subscription/subscription.service';
+import { handleApiError } from '@/lib/errors';
+import { OperationType } from '@/config';
 
 const creditService = new CreditService();
 const subService = new SubscriptionService(creditService);
@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const userId = body.userId || 'user_demo_phase0';
-    const action = body.action || 'CONSUME'; // CONSUME | CHECK | SET_PLAN | RESET
+    const action = body.action || 'CONSUME';
     const operation = (body.operation || 'ASK_MY_WORLD') as OperationType;
 
     if (action === 'CHECK') {
@@ -40,13 +40,12 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === 'SET_PLAN') {
-      const plan = body.plan || 'PRO'; // FREE | PRO
+      const plan = body.plan || 'PRO';
       const sub = await subService.setPlan(userId, plan);
       const newBalance = await creditService.getCreditBalance(userId);
       return NextResponse.json({ success: true, data: { subscription: sub, balance: newBalance } });
     }
 
-    // Default CONSUME
     const result = await creditService.consumeCredits(userId, operation, body.metadata);
     return NextResponse.json({ success: true, data: result });
   } catch (error) {

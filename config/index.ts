@@ -1,7 +1,7 @@
 export const NEXORBIT_CONFIG = {
   appName: 'NEXORBIT',
   tagline: 'Your AI Brain for the Digital World.',
-  version: '1.0.0-phase0',
+  version: '1.0.0-phase1',
   
   env: process.env.NODE_ENV || 'development',
   isProd: process.env.NODE_ENV === 'production',

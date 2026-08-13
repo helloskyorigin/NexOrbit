@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ConnectorService } from '../../../services/connectors/connector.service';
-import { handleApiError } from '../../../lib/errors';
-import { SupportedConnectorType } from '../../../config';
+import { ConnectorService } from '@/services/connectors/connector.service';
+import { handleApiError } from '@/lib/errors';
+import { SupportedConnectorType } from '@/config';
 
 const connectorService = new ConnectorService();
 
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const userId = body.userId || 'user_demo_phase0';
     const connectorType = body.connectorType as SupportedConnectorType;
-    const action = body.action || 'CONNECT'; // CONNECT | DISCONNECT | SYNC
+    const action = body.action || 'CONNECT';
 
     if (action === 'CONNECT') {
       const connector = await connectorService.connectConnector(userId, connectorType, {

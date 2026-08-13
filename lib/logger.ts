@@ -19,16 +19,15 @@ const SENSITIVE_KEYS = [
   'doc_content',
 ];
 
-function sanitize(obj: unknown): unknown {
-  if (!obj || typeof obj !== 'object') return obj;
-  if (Array.isArray(obj)) return obj.map(sanitize);
+function sanitize(obj: Record<string, unknown>): Record<string, unknown> {
+  if (!obj || typeof obj !== 'object') return {};
 
   const sanitized: Record<string, unknown> = {};
-  for (const [key, val] of Object.entries(obj as Record<string, unknown>)) {
+  for (const [key, val] of Object.entries(obj)) {
     if (SENSITIVE_KEYS.some((s) => key.toLowerCase().includes(s.toLowerCase()))) {
       sanitized[key] = '[REDACTED]';
-    } else if (typeof val === 'object' && val !== null) {
-      sanitized[key] = sanitize(val);
+    } else if (typeof val === 'object' && val !== null && !Array.isArray(val)) {
+      sanitized[key] = sanitize(val as Record<string, unknown>);
     } else {
       sanitized[key] = val;
     }

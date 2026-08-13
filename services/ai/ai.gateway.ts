@@ -11,11 +11,11 @@ export class NexorbitModelRouter implements ModelRouter {
       case 'HEAVY_AGENT_TASK':
       case 'REASONING':
       case 'RESEARCH':
-        return NEXORBIT_CONFIG.ai.heavyReasoningModel; // gemini-2.5-pro
+        return NEXORBIT_CONFIG.ai.heavyReasoningModel;
 
       case 'VISION':
       case 'DOCUMENT_ANALYSIS':
-        return NEXORBIT_CONFIG.ai.visionModel; // gemini-2.5-flash
+        return NEXORBIT_CONFIG.ai.visionModel;
 
       case 'ASK_MY_WORLD':
       case 'CONNECT_THE_DOTS':
@@ -23,7 +23,7 @@ export class NexorbitModelRouter implements ModelRouter {
       case 'AUDIO_BRIEFING':
       case 'IMAGE_GENERATION':
       default:
-        return NEXORBIT_CONFIG.ai.defaultModel; // gemini-2.5-flash
+        return NEXORBIT_CONFIG.ai.defaultModel;
     }
   }
 }
@@ -66,7 +66,6 @@ export class AIGatewayService implements AIService {
         promptText += `\n\n[Context Data]:\n${request.contextItems.join('\n---\n')}`;
       }
 
-      // Execute generateContent via GoogleGenAI SDK
       const response = await ai.models.generateContent({
         model: selectedModel,
         contents: promptText,

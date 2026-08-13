@@ -48,7 +48,6 @@ export class ActionEngine implements IActionEngine {
 
     UserIsolationService.validateOwnership(action.userId, validUserId);
 
-    // Verify connector presence and safety checks
     const connectorDoc = inMemoryStore.getDoc(
       'connectors',
       `connector_${validUserId}_${action.targetConnector}`
@@ -140,7 +139,6 @@ export class ActionEngine implements IActionEngine {
       );
     }
 
-    // Lifecycle transition to EXECUTE
     const executedAction: Action = {
       ...action,
       status: 'EXECUTE',

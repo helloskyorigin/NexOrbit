@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { BrainContextService } from '../../../services/brain/context.service';
-import { handleApiError } from '../../../lib/errors';
+import { BrainContextService } from '@/services/brain/context.service';
+import { handleApiError } from '@/lib/errors';
 
 const brainService = new BrainContextService();
 
