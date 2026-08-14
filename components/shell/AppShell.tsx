@@ -18,6 +18,7 @@ import { Drawer } from '../ui/Drawer';
 import { Terminal, Palette, Sparkles } from 'lucide-react';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
+import { cn } from '../../lib/utils';
 
 export interface AppShellProps {
   initialPage?: string;
@@ -67,13 +68,15 @@ export const AppShell: React.FC<AppShellProps> = ({
 
         {/* Main Workspace Column */}
         <div className="flex-1 flex flex-col min-w-0 pb-16 lg:pb-8">
-          {/* Reusable Top Header Bar */}
-          <TopBar
-            activePageTitle={currentPageMeta.title}
-            activePageIcon={currentPageMeta.icon}
-            onNavigate={handleSelectPage}
-            onOpenMobileMenu={() => setIsMobileDrawerOpen(true)}
-          />
+          {/* Reusable Top Header Bar (Shown on subpages) */}
+          {activePage !== 'home' && (
+            <TopBar
+              activePageTitle={currentPageMeta.title}
+              activePageIcon={currentPageMeta.icon}
+              onNavigate={handleSelectPage}
+              onOpenMobileMenu={() => setIsMobileDrawerOpen(true)}
+            />
+          )}
 
           {/* Developer / Design System Quick Switcher Bar (Preserving Phase 0 & Tokens accessibility) */}
           {showDevTabOption && (
@@ -102,13 +105,17 @@ export const AppShell: React.FC<AppShellProps> = ({
           )}
 
           {/* Main Content Area Container */}
-          <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-4 sm:py-6">
+          <main className={cn(
+            "flex-1 w-full mx-auto px-4 sm:px-6 py-4 sm:py-6",
+            activePage === 'home' ? "max-w-5xl" : "max-w-6xl"
+          )}>
             {children ? (
               children
             ) : activePage === 'home' ? (
               <HomeDashboard
                 onNavigate={handleSelectPage}
                 onOpenConnector={(id) => setActiveConnectorId(id)}
+                onOpenMobileMenu={() => setIsMobileDrawerOpen(true)}
               />
             ) : activePage === 'ask' || activePage === 'ask-my-world' ? (
               <AskMyWorldView

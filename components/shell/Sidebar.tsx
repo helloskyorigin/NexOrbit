@@ -3,19 +3,17 @@
 import React from 'react';
 import {
   Home,
-  Brain,
+  MessageSquare,
   History,
-  CheckSquare,
-  Target,
-  Cpu,
-  Settings as SettingsIcon,
   Sparkles,
-  Link2,
+  Target,
+  Box,
+  LayoutGrid,
+  Settings as SettingsIcon,
+  HelpCircle,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { ProUsageCard } from './ProUsageCard';
-import { UserProfileDropdown } from './UserProfileDropdown';
-import { CONNECTOR_DATA, ConnectorId, getConnectorIcon } from './ConnectorModal';
+import { ConnectorId } from './ConnectorModal';
 
 export interface NavItem {
   id: string;
@@ -24,161 +22,140 @@ export interface NavItem {
 }
 
 export const MAIN_NAV_ITEMS: NavItem[] = [
-  { id: 'home', label: 'Home', icon: <Home className="h-4 w-4" /> },
-  { id: 'ask-my-world', label: 'Ask My World', icon: <Brain className="h-4 w-4" /> },
-  { id: 'what-changed', label: 'What Changed', icon: <History className="h-4 w-4" /> },
-  { id: 'clean-my-day', label: 'Clean My Day', icon: <CheckSquare className="h-4 w-4" /> },
-  { id: 'goals', label: 'Goals', icon: <Target className="h-4 w-4" /> },
-  { id: 'memory', label: 'Memory', icon: <Cpu className="h-4 w-4" /> },
+  { id: 'home', label: 'Home', icon: <Home className="h-[18px] w-[18px]" /> },
+  { id: 'ask-my-world', label: 'Ask My World', icon: <MessageSquare className="h-[18px] w-[18px]" /> },
+  { id: 'what-changed', label: 'What Changed', icon: <History className="h-[18px] w-[18px]" /> },
+  { id: 'clean-my-day', label: 'Clean My Day', icon: <Sparkles className="h-[18px] w-[18px]" /> },
+  { id: 'goals', label: 'Goals', icon: <Target className="h-[18px] w-[18px]" /> },
+  { id: 'memory', label: 'Memory', icon: <Box className="h-[18px] w-[18px]" /> },
+  { id: 'connected-apps', label: 'Connected Apps', icon: <LayoutGrid className="h-[18px] w-[18px]" /> },
 ];
 
-export const CONNECTORS_NAV: Array<{ id: ConnectorId; name: string }> = [
-  { id: 'gmail', name: 'Gmail' },
-  { id: 'calendar', name: 'Calendar' },
-  { id: 'drive', name: 'Drive' },
-  { id: 'notion', name: 'Notion' },
-  { id: 'github', name: 'GitHub' },
+export const BOTTOM_NAV_ITEMS: NavItem[] = [
+  { id: 'settings', label: 'Settings', icon: <SettingsIcon className="h-[18px] w-[18px]" /> },
+  { id: 'support', label: 'Support', icon: <HelpCircle className="h-[18px] w-[18px]" /> },
 ];
 
 export interface SidebarProps {
   activePage: string;
   onSelectPage: (pageId: string) => void;
-  onOpenConnector: (connectorId: ConnectorId) => void;
+  onOpenConnector?: (connectorId: ConnectorId) => void;
   className?: string;
-  collapsed?: boolean;
-  onToggleCollapse?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
   activePage,
   onSelectPage,
-  onOpenConnector,
   className,
 }) => {
   return (
     <aside
       className={cn(
-        'w-64 bg-white border-r border-slate-200/80 flex flex-col justify-between shrink-0 h-screen sticky top-0 select-none z-20',
+        'w-[240px] bg-white rounded-3xl border border-slate-100/90 shadow-[0_8px_30px_rgba(0,0,0,0.02)] flex flex-col justify-between shrink-0 select-none p-4 my-4 ml-4 h-[calc(100vh-2rem)] sticky top-4 z-20',
         className
       )}
     >
-      {/* Top Header & Navigation */}
-      <div className="flex flex-col flex-1 overflow-y-auto px-4 py-5 space-y-6">
+      {/* Top Header & Main Navigation */}
+      <div className="space-y-6">
         {/* Brand / Logo */}
         <div
           onClick={() => onSelectPage('home')}
-          className="flex items-center gap-2.5 px-2 cursor-pointer group"
+          className="flex items-center gap-3 px-3 pt-2 cursor-pointer group"
         >
-          <div className="h-8 w-8 rounded-xl bg-slate-900 text-indigo-400 flex items-center justify-center font-bold shadow-xs group-hover:bg-slate-800 transition-colors">
-            <Sparkles className="h-4.5 w-4.5" />
+          {/* Orbital Ribbon Logo */}
+          <div className="relative h-8 w-8 flex items-center justify-center shrink-0">
+            <svg viewBox="0 0 32 32" className="w-8 h-8 transform group-hover:rotate-12 transition-transform duration-300">
+              <defs>
+                <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#818cf8" />
+                  <stop offset="50%" stopColor="#6366f1" />
+                  <stop offset="100%" stopColor="#4f46e5" />
+                </linearGradient>
+              </defs>
+              <circle cx="16" cy="16" r="3.5" fill="#6366f1" />
+              <ellipse
+                cx="16"
+                cy="16"
+                rx="12"
+                ry="5.5"
+                fill="none"
+                stroke="url(#logoGrad)"
+                strokeWidth="2.2"
+                transform="rotate(-28 16 16)"
+                strokeLinecap="round"
+              />
+              <ellipse
+                cx="16"
+                cy="16"
+                rx="12"
+                ry="5.5"
+                fill="none"
+                stroke="url(#logoGrad)"
+                strokeWidth="2.2"
+                transform="rotate(35 16 16)"
+                strokeLinecap="round"
+              />
+            </svg>
           </div>
-          <div>
-            <div className="text-sm font-extrabold tracking-tight text-slate-900 group-hover:text-indigo-600 transition-colors">
-              NEXORBIT
-            </div>
-            <div className="text-[10px] font-medium tracking-wider uppercase text-slate-400 -mt-0.5">
-              AI Brain
-            </div>
+
+          <div className="text-[15px] font-extrabold tracking-wider text-slate-950 font-sans">
+            NEXORBIT
           </div>
         </div>
 
         {/* Main Navigation List */}
-        <div className="space-y-1">
-          <div className="px-2 text-[10px] font-semibold tracking-wider text-slate-400 uppercase mb-1.5">
-            Main Navigation
-          </div>
-          <nav className="space-y-1">
-            {MAIN_NAV_ITEMS.map((item) => {
-              const isActive = activePage === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => onSelectPage(item.id)}
-                  className={cn(
-                    'w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium transition-all duration-150',
-                    isActive
-                      ? 'bg-slate-900 text-white font-semibold shadow-xs'
-                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                  )}
-                >
-                  <span className={cn('shrink-0', isActive ? 'text-indigo-400' : 'text-slate-400')}>
-                    {item.icon}
-                  </span>
-                  <span className="truncate">{item.label}</span>
-                </button>
-              );
-            })}
-          </nav>
-        </div>
+        <nav className="space-y-1">
+          {MAIN_NAV_ITEMS.map((item) => {
+            const isActive =
+              activePage === item.id ||
+              (item.id === 'connected-apps' && activePage === 'connectors') ||
+              (item.id === 'ask-my-world' && activePage === 'ask');
 
-        {/* Connected Apps Section */}
-        <div className="space-y-1.5 pt-2 border-t border-slate-100">
-          <button
-            onClick={() => onSelectPage('connected-apps')}
-            className="w-full flex items-center justify-between px-2 mb-1 group text-left cursor-pointer"
-          >
-            <span className="text-[10px] font-semibold tracking-wider text-slate-400 uppercase group-hover:text-indigo-600 transition-colors">
-              Connected Apps
-            </span>
-            <Link2 className="h-3 w-3 text-slate-400 group-hover:text-indigo-600 transition-colors" />
-          </button>
-          <div className="space-y-0.5">
-            {CONNECTORS_NAV.map((conn) => {
-              const info = CONNECTOR_DATA[conn.id];
-              return (
-                <button
-                  key={conn.id}
-                  onClick={() => onOpenConnector(conn.id)}
-                  className="w-full flex items-center justify-between px-3 py-1.5 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-all duration-150 group"
-                >
-                  <div className="flex items-center gap-2.5 truncate">
-                    <span className="text-slate-400 group-hover:text-indigo-600 transition-colors">
-                      {getConnectorIcon(conn.id, 'h-3.5 w-3.5')}
-                    </span>
-                    <span className="truncate">{info.name}</span>
-                  </div>
-
-                  {/* Small Status Indicator Dot */}
-                  <span className="flex items-center gap-1 shrink-0">
-                    <span
-                      className={cn(
-                        'h-2 w-2 rounded-full',
-                        info.connected ? 'bg-emerald-500' : 'bg-slate-300'
-                      )}
-                    />
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
+            return (
+              <button
+                key={item.id}
+                onClick={() => onSelectPage(item.id)}
+                className={cn(
+                  'w-full flex items-center gap-3.5 px-4 py-2.5 rounded-2xl text-[13px] font-medium transition-all duration-150 text-left cursor-pointer',
+                  isActive
+                    ? 'bg-indigo-50/80 text-indigo-600 font-semibold border border-indigo-100/80 shadow-2xs'
+                    : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50/80'
+                )}
+              >
+                <span className={cn('shrink-0', isActive ? 'text-indigo-600' : 'text-slate-400')}>
+                  {item.icon}
+                </span>
+                <span className="truncate">{item.label}</span>
+              </button>
+            );
+          })}
+        </nav>
       </div>
 
-      {/* Bottom Section: Pro Usage Card, Settings, User Profile */}
-      <div className="p-4 border-t border-slate-100/90 space-y-3.5 bg-slate-50/50">
-        <ProUsageCard used={1250} total={15000} />
-
-        {/* Settings Navigation Item */}
-        <button
-          onClick={() => onSelectPage('settings')}
-          className={cn(
-            'w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium transition-all duration-150',
-            activePage === 'settings'
-              ? 'bg-slate-900 text-white font-semibold shadow-xs'
-              : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-          )}
-        >
-          <SettingsIcon
-            className={cn('h-4 w-4 shrink-0', activePage === 'settings' ? 'text-indigo-400' : 'text-slate-400')}
-          />
-          <span>Settings</span>
-        </button>
-
-        {/* User Profile */}
-        <div className="pt-1 border-t border-slate-200/60">
-          <UserProfileDropdown onNavigate={onSelectPage} />
-        </div>
+      {/* Bottom Section: Settings and Support */}
+      <div className="space-y-1 pt-4 border-t border-slate-100">
+        {BOTTOM_NAV_ITEMS.map((item) => {
+          const isActive = activePage === item.id;
+          return (
+            <button
+              key={item.id}
+              onClick={() => onSelectPage(item.id)}
+              className={cn(
+                'w-full flex items-center gap-3.5 px-4 py-2.5 rounded-2xl text-[13px] font-medium transition-all duration-150 text-left cursor-pointer',
+                isActive
+                  ? 'bg-indigo-50/80 text-indigo-600 font-semibold border border-indigo-100/80 shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50/80'
+              )}
+            >
+              <span className={cn('shrink-0', isActive ? 'text-indigo-600' : 'text-slate-400')}>
+                {item.icon}
+              </span>
+              <span className="truncate">{item.label}</span>
+            </button>
+          );
+        })}
       </div>
     </aside>
   );
 };
+
