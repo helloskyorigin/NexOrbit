@@ -2,8 +2,7 @@
 
 import React from 'react';
 import { ConnectorItem } from './types';
-import { ConnectorIcon } from './ConnectorIcon';
-import { ShieldCheck, Eye, Brain, Lock } from 'lucide-react';
+import { Shield, Eye, Lock, SlidersHorizontal } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 export interface PermissionPanelProps {
@@ -12,65 +11,45 @@ export interface PermissionPanelProps {
 }
 
 export const PermissionPanel: React.FC<PermissionPanelProps> = ({ connector, className }) => {
-  const { permissions } = connector;
-
   return (
-    <div className={cn('space-y-4 text-xs text-slate-800', className)}>
-      <div className="flex items-center gap-2.5 pb-2 border-b border-slate-200/80">
-        <div className="p-1.5 rounded-lg bg-slate-100 border border-slate-200">
-          <ConnectorIcon id={connector.id} size="sm" />
-        </div>
-        <h4 className="font-extrabold text-slate-900 text-sm tracking-tight">
-          {connector.name} permissions
-        </h4>
-      </div>
-
-      {/* ACCESS SECTION */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-1.5 font-bold text-slate-900 uppercase tracking-wider text-[10px]">
+    <div className={cn('space-y-4 text-xs', className)}>
+      {/* Access */}
+      <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
+        <div className="flex items-center gap-2 font-bold text-slate-900">
           <Eye className="h-3.5 w-3.5 text-indigo-600" />
-          <span>Access</span>
+          <span>Data Accessed</span>
         </div>
-        <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1.5">
-          {permissions.access.map((item, idx) => (
-            <div key={idx} className="flex items-start gap-2 text-slate-700 font-medium">
-              <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 shrink-0 mt-1.5" />
-              <span>{item}</span>
-            </div>
+        <ul className="space-y-1 text-slate-600 pl-5 list-disc">
+          {connector.permissions.access.map((item, i) => (
+            <li key={i}>{item}</li>
           ))}
-        </div>
+        </ul>
       </div>
 
-      {/* USE SECTION */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-1.5 font-bold text-slate-900 uppercase tracking-wider text-[10px]">
-          <Brain className="h-3.5 w-3.5 text-indigo-600" />
-          <span>Use</span>
+      {/* Use */}
+      <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
+        <div className="flex items-center gap-2 font-bold text-slate-900">
+          <SlidersHorizontal className="h-3.5 w-3.5 text-emerald-600" />
+          <span>How It&apos;s Used</span>
         </div>
-        <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1.5">
-          {permissions.use.map((item, idx) => (
-            <div key={idx} className="flex items-start gap-2 text-slate-700 font-medium">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0 mt-1.5" />
-              <span>{item}</span>
-            </div>
+        <ul className="space-y-1 text-slate-600 pl-5 list-disc">
+          {connector.permissions.use.map((item, i) => (
+            <li key={i}>{item}</li>
           ))}
-        </div>
+        </ul>
       </div>
 
-      {/* CONTROL SECTION */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-1.5 font-bold text-slate-900 uppercase tracking-wider text-[10px]">
-          <Lock className="h-3.5 w-3.5 text-indigo-600" />
-          <span>Control</span>
+      {/* Control */}
+      <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
+        <div className="flex items-center gap-2 font-bold text-slate-900">
+          <Lock className="h-3.5 w-3.5 text-blue-600" />
+          <span>User Control &amp; Revocation</span>
         </div>
-        <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1.5">
-          {permissions.control.map((item, idx) => (
-            <div key={idx} className="flex items-start gap-2 text-slate-700 font-medium">
-              <span className="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0 mt-1.5" />
-              <span>{item}</span>
-            </div>
+        <ul className="space-y-1 text-slate-600 pl-5 list-disc">
+          {connector.permissions.control.map((item, i) => (
+            <li key={i}>{item}</li>
           ))}
-        </div>
+        </ul>
       </div>
     </div>
   );

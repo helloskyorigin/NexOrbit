@@ -1,57 +1,54 @@
 'use client';
 
 import React from 'react';
-import { Link2, Plus, Sparkles, Globe } from 'lucide-react';
+import { Sparkles, ArrowRight, ShieldCheck } from 'lucide-react';
 import { Button } from '../ui/Button';
-import { cn } from '../../lib/utils';
 
 export interface EmptyConnectStateProps {
   onConnectGoogle: () => void;
-  onExploreApps?: () => void;
-  className?: string;
+  onExploreApps: () => void;
 }
 
 export const EmptyConnectState: React.FC<EmptyConnectStateProps> = ({
   onConnectGoogle,
   onExploreApps,
-  className,
 }) => {
   return (
-    <div className={cn('py-12 px-4 max-w-lg mx-auto text-center space-y-6 animate-fadeIn', className)}>
-      <div className="h-14 w-14 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center mx-auto shadow-2xs text-indigo-600">
-        <Globe className="h-7 w-7" />
+    <div className="p-8 sm:p-12 text-center rounded-3xl bg-white border border-slate-200 shadow-sm space-y-5 max-w-2xl mx-auto">
+      <div className="h-14 w-14 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 mx-auto">
+        <Sparkles className="h-7 w-7" />
       </div>
 
       <div className="space-y-2">
-        <h3 className="text-xl font-extrabold text-slate-900 tracking-tight">
-          Connect your world
+        <h3 className="text-xl font-bold text-slate-900">
+          No apps connected yet
         </h3>
-        <p className="text-xs sm:text-sm text-slate-500 font-medium leading-relaxed">
-          Start with the apps where your important information lives. NEXORBIT will bring relevant context together.
+        <p className="text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
+          Connect your Google Workspace or developer platforms so NEXORBIT can index your communications, files, and schedule to build your personal AI Brain.
         </p>
       </div>
 
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-2">
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
         <Button
           variant="primary"
-          size="md"
           onClick={onConnectGoogle}
-          leftIcon={<Plus className="h-4 w-4" />}
-          className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs sm:text-sm h-10 px-5 shadow-xs w-full sm:w-auto"
+          className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs h-10 px-5 rounded-xl cursor-pointer"
+          rightIcon={<ArrowRight className="h-4 w-4" />}
         >
-          Connect Google
+          Connect Google Workspace
         </Button>
+        <Button
+          variant="secondary"
+          onClick={onExploreApps}
+          className="w-full sm:w-auto bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs h-10 px-5 rounded-xl cursor-pointer"
+        >
+          Explore All Integrations
+        </Button>
+      </div>
 
-        {onExploreApps && (
-          <Button
-            variant="outline"
-            size="md"
-            onClick={onExploreApps}
-            className="bg-white hover:bg-slate-50 border-slate-200 text-slate-700 font-semibold text-xs sm:text-sm h-10 px-5 w-full sm:w-auto"
-          >
-            Explore apps
-          </Button>
-        )}
+      <div className="flex items-center justify-center gap-2 pt-3 text-xs text-slate-400">
+        <ShieldCheck className="h-4 w-4 text-emerald-500" />
+        <span>Enterprise-grade TLS encryption and zero third-party data sharing.</span>
       </div>
     </div>
   );
