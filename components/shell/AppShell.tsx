@@ -68,8 +68,8 @@ export const AppShell: React.FC<AppShellProps> = ({
 
         {/* Main Workspace Column */}
         <div className="flex-1 flex flex-col min-w-0 pb-16 lg:pb-8">
-          {/* Reusable Top Header Bar (Shown on subpages) */}
-          {activePage !== 'home' && (
+          {/* Reusable Top Header Bar (Shown on subpages that do not have custom header systems) */}
+          {activePage !== 'home' && activePage !== 'ask' && activePage !== 'ask-my-world' && activePage !== 'what-changed' && activePage !== 'clean-my-day' && activePage !== 'goals' && activePage !== 'memory' && (
             <TopBar
               activePageTitle={currentPageMeta.title}
               activePageIcon={currentPageMeta.icon}
@@ -106,8 +106,8 @@ export const AppShell: React.FC<AppShellProps> = ({
 
           {/* Main Content Area Container */}
           <main className={cn(
-            "flex-1 w-full mx-auto px-4 sm:px-6 py-4 sm:py-6",
-            activePage === 'home' ? "max-w-5xl" : "max-w-6xl"
+            "flex-1 w-full mx-auto px-4 sm:px-6 py-2 sm:py-4",
+            activePage === 'home' ? "max-w-5xl" : activePage === 'ask' || activePage === 'ask-my-world' || activePage === 'what-changed' || activePage === 'clean-my-day' || activePage === 'goals' || activePage === 'memory' ? "max-w-7xl" : "max-w-6xl"
           )}>
             {children ? (
               children
@@ -120,7 +120,7 @@ export const AppShell: React.FC<AppShellProps> = ({
             ) : activePage === 'ask' || activePage === 'ask-my-world' ? (
               <AskMyWorldView
                 onNavigate={handleSelectPage}
-                onOpenConnector={(id) => setActiveConnectorId(id)}
+                onOpenConnector={(id) => setActiveConnectorId(id as ConnectorId)}
               />
             ) : activePage === 'what-changed' ? (
               <WhatChangedView onNavigate={handleSelectPage} />

@@ -11,6 +11,7 @@ import {
   LayoutGrid,
   Settings as SettingsIcon,
   HelpCircle,
+  ChevronRight,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { ConnectorId } from './ConnectorModal';
@@ -98,8 +99,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </svg>
           </div>
 
-          <div className="text-[15px] font-extrabold tracking-wider text-slate-950 font-sans">
-            NEXORBIT
+          <div>
+            <div className="text-[15px] font-extrabold tracking-wider text-slate-950 font-sans leading-none">
+              NEXORBIT
+            </div>
+            <div className="text-[9px] font-bold tracking-widest text-indigo-600 uppercase mt-0.5">
+              AI BRAIN
+            </div>
           </div>
         </div>
 
@@ -132,28 +138,45 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </nav>
       </div>
 
-      {/* Bottom Section: Settings and Support */}
-      <div className="space-y-1 pt-4 border-t border-slate-100">
-        {BOTTOM_NAV_ITEMS.map((item) => {
-          const isActive = activePage === item.id;
-          return (
-            <button
-              key={item.id}
-              onClick={() => onSelectPage(item.id)}
-              className={cn(
-                'w-full flex items-center gap-3.5 px-4 py-2.5 rounded-2xl text-[13px] font-medium transition-all duration-150 text-left cursor-pointer',
-                isActive
-                  ? 'bg-indigo-50/80 text-indigo-600 font-semibold border border-indigo-100/80 shadow-2xs'
-                  : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50/80'
-              )}
-            >
-              <span className={cn('shrink-0', isActive ? 'text-indigo-600' : 'text-slate-400')}>
-                {item.icon}
+      {/* Bottom Section: Settings, Support & Profile Switcher */}
+      <div className="space-y-2 pt-4 border-t border-slate-100">
+        <div className="space-y-1">
+          {BOTTOM_NAV_ITEMS.map((item) => {
+            const isActive = activePage === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => onSelectPage(item.id)}
+                className={cn(
+                  'w-full flex items-center gap-3.5 px-4 py-2.5 rounded-2xl text-[13px] font-medium transition-all duration-150 text-left cursor-pointer',
+                  isActive
+                    ? 'bg-indigo-50/80 text-indigo-600 font-semibold border border-indigo-100/80 shadow-2xs'
+                    : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50/80'
+                )}
+              >
+                <span className={cn('shrink-0', isActive ? 'text-indigo-600' : 'text-slate-400')}>
+                  {item.icon}
+                </span>
+                <span className="truncate">{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Workspace Profile Switcher Pill */}
+        <div className="pt-2 border-t border-slate-100/80">
+          <div className="flex items-center justify-between p-2 rounded-2xl hover:bg-slate-50 transition-colors cursor-pointer group">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="h-7 w-7 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-bold shrink-0 shadow-2xs">
+                N
+              </div>
+              <span className="text-xs font-bold text-slate-800 truncate group-hover:text-indigo-600 transition-colors">
+                NEXORBIT
               </span>
-              <span className="truncate">{item.label}</span>
-            </button>
-          );
-        })}
+            </div>
+            <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-indigo-600 group-hover:translate-x-0.5 transition-all shrink-0" />
+          </div>
+        </div>
       </div>
     </aside>
   );

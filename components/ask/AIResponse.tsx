@@ -1,185 +1,162 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ArrowRight } from 'lucide-react';
-import { AskResponseData, SourceItem } from './types';
-import { InsightCard } from './InsightCard';
-import { FollowUpSuggestions } from './FollowUpSuggestions';
+import { Volume2, VolumeX, Copy, Check, Maximize2, Minimize2 } from 'lucide-react';
+import { AskResponseData, FindingItem, SourceItem } from './types';
+import { FindingCard } from './FindingCard';
+import { RecommendedNextStep } from './RecommendedNextStep';
+import { useToast } from '../ui/Toast';
 import { cn } from '../../lib/utils';
 
 export interface AIResponseProps {
   data: AskResponseData;
-  timestamp: string;
-  onSelectFollowUp: (prompt: string) => void;
+  onSelectFindingAction: (finding: FindingItem) => void;
   onSelectSource: (source: SourceItem) => void;
+  onPrepareResponse: () => void;
   className?: string;
 }
 
 export const AIResponse: React.FC<AIResponseProps> = ({
   data,
-  timestamp,
-  onSelectFollowUp,
+  onSelectFindingAction,
   onSelectSource,
+  onPrepareResponse,
   className,
 }) => {
-  const [activeDisclosure, setActiveDisclosure] = useState<'reasoning' | 'sources' | 'why' | null>(null);
+  const { addToast } = useToast();
+  const [isCopied, setIsCopied] = useState(false);
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [isExpandedFocus, setIsExpandedFocus] = useState(false);
 
-  const toggleDisclosure = (type: 'reasoning' | 'sources' | 'why') => {
-    setActiveDisclosure((prev) => (prev === type ? null : type));
+  const handleCopy = () => {
+    const textToCopy = `${data.summaryText}\n\n` +
+      data.findings.map((f, i) => `${i + 1}. ${f.title}: ${f.description}`).join('\n') +
+      (data.recommendedNextStep ? `\n\nNext Step: ${data.recommendedNextStep.text}` : '');
+
+    navigator.clipboard.writeText(textToCopy);
+    setIsCopied(true);
+    addToast({
+      type: 'success',
+      title: 'Copied to Clipboard',
+      description: 'NEXORBIT findings copied successfully.',
+    });
+    setTimeout(() => setIsCopied(false), 2000);
+  };
+
+  const handleToggleAudio = () => {
+    setIsPlayingAudio(!isPlayingAudio);
+    if (!isPlayingAudio) {
+      addToast({
+        type: 'info',
+        title: 'Voice Briefing Active',
+        description: 'Simulating audio summary of key insights.',
+      });
+      setTimeout(() => {
+        setIsPlayingAudio(false);
+      }, 4000);
+    }
   };
 
   return (
-    <div className={cn('my-6 space-y-6 relative max-w-2xl mx-auto w-full animate-fadeIn', className)}>
-      {/* Subtle Orbital Signature Arc (Minimal, Elegant Brand Detail) */}
-      <div className="absolute -left-6 -top-6 -right-6 -bottom-6 rounded-3xl border border-indigo-500/[0.04] pointer-events-none bg-radial from-indigo-500/[0.01] to-transparent">
-        <div className="absolute top-1/4 right-0 h-1.5 w-1.5 rounded-full bg-indigo-400/40 shadow-[0_0_6px_#6366f1] animate-pulse" />
-      </div>
-
-      {/* Top Header & Identity */}
-      <div className="relative z-10 flex items-center justify-between gap-3 pb-2 border-b border-slate-100/60">
-        <div className="flex items-center gap-2">
-          {/* Custom Orbital AI Mark */}
-          <svg className="h-4 w-4 text-indigo-600 animate-spin shrink-0" style={{ animationDuration: '6s' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <circle cx="12" cy="12" r="3" fill="currentColor" />
-            <ellipse cx="12" cy="12" rx="9" ry="3" transform="rotate(-30 12 12)" strokeLinecap="round" />
-          </svg>
-          <div>
-            <h3 className="text-[11px] font-bold text-slate-900 tracking-tight">
-              NEXORBIT AI Brain
-            </h3>
-          </div>
-        </div>
-
-        <span className="text-[10px] font-mono text-slate-400 font-normal">{timestamp}</span>
-      </div>
-
-      {/* Dominant Statement */}
-      <div className="relative z-10 space-y-1 pl-1">
-        <h2 className="text-base sm:text-lg font-bold text-slate-950 tracking-tight leading-snug">
-          {data.summaryText}
-        </h2>
-      </div>
-
-      {/* Progressive Disclosure Controls (Answer Depth) */}
-      <div className="relative z-10 pl-1 flex flex-wrap gap-2 pt-0.5">
-        <button
-          onClick={() => toggleDisclosure('reasoning')}
-          className={cn(
-            'px-2.5 py-1 rounded-xl text-[10.5px] font-semibold transition-colors cursor-pointer border',
-            activeDisclosure === 'reasoning'
-              ? 'bg-slate-900 text-white border-slate-950'
-              : 'bg-slate-50 text-slate-600 border-slate-100 hover:bg-slate-100'
-          )}
-        >
-          Show reasoning
-        </button>
-        <button
-          onClick={() => toggleDisclosure('sources')}
-          className={cn(
-            'px-2.5 py-1 rounded-xl text-[10.5px] font-semibold transition-colors cursor-pointer border',
-            activeDisclosure === 'sources'
-              ? 'bg-slate-900 text-white border-slate-950'
-              : 'bg-slate-50 text-slate-600 border-slate-100 hover:bg-slate-100'
-          )}
-        >
-          Show sources
-        </button>
-        <button
-          onClick={() => toggleDisclosure('why')}
-          className={cn(
-            'px-2.5 py-1 rounded-xl text-[10.5px] font-semibold transition-colors cursor-pointer border',
-            activeDisclosure === 'why'
-              ? 'bg-slate-900 text-white border-slate-950'
-              : 'bg-slate-50 text-slate-600 border-slate-100 hover:bg-slate-100'
-          )}
-        >
-          Why this matters
-        </button>
-      </div>
-
-      {/* Progressive Disclosure Content Areas */}
-      {activeDisclosure && (
-        <div className="relative z-10 pl-1">
-          {activeDisclosure === 'reasoning' && (
-            <p className="text-xs sm:text-[12.5px] text-slate-600 leading-relaxed bg-slate-50 border border-slate-100 p-3 rounded-xl animate-fadeIn font-normal">
-              I synthesized connected Gmail messages, calendar timelines, and documents matching Project Alpha. Rahul recently requested a Friday spec delivery, but the active scope brief lists Monday, highlighting a core schedule mismatch before the Monday sync.
-            </p>
-          )}
-
-          {activeDisclosure === 'sources' && (
-            <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 animate-fadeIn space-y-2">
-              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block">
-                Evidence Files
-              </span>
-              <div className="flex flex-col gap-1.5">
-                {data.sources.map((src) => (
-                  <button
-                    key={src.id}
-                    onClick={() => onSelectSource(src)}
-                    className="w-full text-left p-2 rounded-lg bg-white border border-slate-100 hover:border-indigo-200 hover:text-indigo-600 transition-colors text-xs font-medium flex items-center justify-between gap-3 cursor-pointer"
-                  >
-                    <span className="truncate">{src.connectorName}: {src.title}</span>
-                    <span className="text-[10px] text-slate-400 font-normal shrink-0 font-mono">{src.timestamp}</span>
-                  </button>
-                ))}
-              </div>
+    <div className={cn('space-y-4 my-2 animate-fadeIn', className)}>
+      {/* Top Header Row with Identity and Actions */}
+      <div className="flex items-center justify-between gap-3">
+        {/* Left Identity: Celestial Orb + Name + Badge + Timestamp */}
+        <div className="flex items-center gap-3">
+          {/* Orbital Celestial Sphere */}
+          <div className="relative h-10 w-10 rounded-full bg-gradient-to-tr from-indigo-900 via-indigo-700 to-violet-500 p-[2px] shadow-[0_0_15px_rgba(99,102,241,0.25)] shrink-0 flex items-center justify-center">
+            {/* Ambient inner sphere glow */}
+            <div className="h-full w-full rounded-full bg-gradient-to-br from-indigo-950 via-slate-900 to-indigo-900 flex items-center justify-center relative overflow-hidden">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,#818cf8_0%,transparent_60%)] opacity-80" />
+              {/* Orbital rings SVG */}
+              <svg viewBox="0 0 24 24" className="h-5 w-5 text-indigo-200 animate-spin" style={{ animationDuration: '12s' }}>
+                <circle cx="12" cy="12" r="3" fill="#ffffff" />
+                <ellipse cx="12" cy="12" rx="8" ry="3.5" fill="none" stroke="currentColor" strokeWidth="1.2" transform="rotate(-30 12 12)" />
+              </svg>
             </div>
-          )}
+          </div>
 
-          {activeDisclosure === 'why' && (
-            <p className="text-xs sm:text-[12.5px] text-slate-600 leading-relaxed bg-slate-50 border border-slate-100 p-3 rounded-xl animate-fadeIn font-normal">
-              Resolving this prevents client friction or delivery delays. Conflicting dates across active folders leads to team planning drift, making alignment the highest immediate priority.
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* Findings - Open Vertical List with Subtle Separators */}
-      {data.insights && data.insights.length > 0 && (
-        <div className="relative z-10 divide-y divide-slate-100/60 pl-1">
-          {data.insights.map((insight, index) => (
-            <InsightCard
-              key={insight.id}
-              insight={insight}
-              index={index}
-              onSelectSource={(sourceId: string) => {
-                const match = data.sources.find((s) => s.id === sourceId);
-                if (match) onSelectSource(match);
-              }}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Recommended Next Step - Subtle Blue-Violet AI Surface */}
-      {data.recommendedNextStep && (
-        <div className="relative z-10 p-3.5 rounded-xl bg-indigo-50/40 border border-indigo-100/30 text-xs flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <span className="h-1.5 w-1.5 rounded-full bg-indigo-600 shrink-0" />
-            <span className="font-semibold text-slate-800">
-              Recommended: <span className="text-slate-600 font-normal">{data.recommendedNextStep.text}</span>
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold text-slate-950 tracking-tight">
+                NEXORBIT
+              </span>
+              <span className="px-2 py-0.5 rounded-full text-[10.5px] font-semibold bg-indigo-50 text-indigo-600 border border-indigo-100/60 shadow-2xs">
+                AI Brain
+              </span>
+            </div>
+            <span className="text-xs text-slate-400 font-normal block">
+              {data.timestamp || 'Today, 9:24 AM'}
             </span>
           </div>
+        </div>
+
+        {/* Right Response Actions: Audio, Copy, Expand */}
+        <div className="flex items-center gap-1 text-slate-400">
           <button
-            onClick={() =>
-              onSelectFollowUp(
-                data.recommendedNextStep?.actionLabel === 'Prepare response'
-                  ? 'Draft a follow-up response email to Rahul regarding the deadline.'
-                  : `Execute recommended action: ${data.recommendedNextStep?.text}`
-              )
-            }
-            className="text-[11px] font-bold text-indigo-600 hover:text-indigo-700 transition-colors shrink-0 flex items-center gap-1 cursor-pointer border-0 bg-transparent"
+            type="button"
+            onClick={handleToggleAudio}
+            className={cn(
+              'p-2 rounded-xl transition-colors cursor-pointer',
+              isPlayingAudio ? 'text-indigo-600 bg-indigo-50 animate-pulse' : 'hover:text-slate-700 hover:bg-slate-100/70'
+            )}
+            title={isPlayingAudio ? 'Mute briefing' : 'Play voice briefing'}
           >
-            <span>{data.recommendedNextStep.actionLabel || 'Prepare response'}</span>
-            <ArrowRight className="h-3.5 w-3.5" />
+            {isPlayingAudio ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleCopy}
+            className="p-2 rounded-xl hover:text-slate-700 hover:bg-slate-100/70 transition-colors cursor-pointer"
+            title="Copy response"
+          >
+            {isCopied ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setIsExpandedFocus(!isExpandedFocus);
+              addToast({
+                type: 'info',
+                title: isExpandedFocus ? 'Standard View' : 'Focus Mode',
+                description: isExpandedFocus ? 'Returned to normal layout.' : 'Focused on AI insights.',
+              });
+            }}
+            className="p-2 rounded-xl hover:text-slate-700 hover:bg-slate-100/70 transition-colors cursor-pointer hidden sm:inline-flex"
+            title={isExpandedFocus ? 'Exit focus mode' : 'Expand focus view'}
+          >
+            {isExpandedFocus ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
           </button>
         </div>
-      )}
+      </div>
 
-      {/* Suggested Follow-ups */}
-      <FollowUpSuggestions onSelectFollowUp={onSelectFollowUp} />
+      {/* Main Dominant Headline */}
+      <h2 className="text-base sm:text-lg lg:text-[19px] font-bold text-slate-950 tracking-tight leading-snug pt-1">
+        {data.summaryText}
+      </h2>
+
+      {/* Finding Cards List */}
+      <div className="space-y-3 pt-1">
+        {data.findings.map((finding) => (
+          <FindingCard
+            key={finding.id}
+            finding={finding}
+            onActionClick={onSelectFindingAction}
+            onSourceClick={onSelectSource}
+          />
+        ))}
+      </div>
+
+      {/* Recommended Next Step Banner */}
+      {data.recommendedNextStep && (
+        <RecommendedNextStep
+          text={data.recommendedNextStep.text}
+          actionLabel={data.recommendedNextStep.actionLabel}
+          onPrepareResponse={onPrepareResponse}
+        />
+      )}
     </div>
   );
 };
-
-

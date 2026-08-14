@@ -116,7 +116,7 @@ export const ContextPanel: React.FC<ContextPanelProps> = ({ onClose, className }
               />
             </button>
 
-            {expandedIds[projectEntity.id] && (
+            {expandedIds[projectEntity.id] && projectEntity.details && (
               <div className="pl-6 pt-0.5 space-y-1.5 text-[11px] text-slate-500 animate-fadeIn font-normal">
                 {projectEntity.details.map((detail, idx) => (
                   <div key={idx} className="flex items-center gap-2 leading-relaxed">
@@ -167,7 +167,7 @@ export const ContextPanel: React.FC<ContextPanelProps> = ({ onClose, className }
                   />
                 </button>
 
-                {isExpanded && (
+                {isExpanded && entity.details && (
                   <div className="pl-6 pt-0.5 space-y-1.5 text-[11px] text-slate-500 animate-fadeIn font-normal">
                     {entity.details.map((detail, idx) => (
                       <div key={idx} className="flex items-center gap-2 leading-relaxed">

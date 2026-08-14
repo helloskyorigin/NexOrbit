@@ -1,113 +1,223 @@
 'use client';
 
-import React from 'react';
-import { Mail, Calendar, FileText, Globe, Trash2, Edit3, ShieldAlert } from 'lucide-react';
+import React, { useState } from 'react';
+import {
+  MoreHorizontal,
+  ExternalLink,
+  Edit3,
+  Pin,
+  Trash2,
+  Eye,
+  Check,
+  Sparkles,
+} from 'lucide-react';
 import { MemoryItem } from './types';
+import { MemorySourceIcon } from './MemorySourceIcon';
 import { cn } from '../../lib/utils';
 
-interface MemoryCardProps {
+export interface MemoryCardProps {
   memory: MemoryItem;
-  onSelect: (m: MemoryItem) => void;
-  onEdit: (m: MemoryItem, e: React.MouseEvent) => void;
-  onForget: (m: MemoryItem, e: React.MouseEvent) => void;
+  onClick: (memory: MemoryItem) => void;
+  onEdit: (memory: MemoryItem) => void;
+  onForget: (memory: MemoryItem) => void;
+  onTogglePin: (memory: MemoryItem) => void;
+  onOpenSource: (memory: MemoryItem) => void;
+  isFirst?: boolean;
+  isLast?: boolean;
 }
 
 export const MemoryCard: React.FC<MemoryCardProps> = ({
   memory,
-  onSelect,
+  onClick,
   onEdit,
   onForget,
+  onTogglePin,
+  onOpenSource,
+  isFirst,
+  isLast,
 }) => {
-  const getSourceIcon = (source?: string) => {
-    if (!source) return <Globe className="h-3.5 w-3.5 text-slate-400" />;
-    const srcLower = source.toLowerCase();
-    if (srcLower.includes('gmail') || srcLower.includes('mail')) {
-      return <Mail className="h-3.5 w-3.5 text-rose-500" />;
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const getDotBg = (color?: string) => {
+    switch (color) {
+      case 'green':
+        return 'bg-emerald-500 ring-emerald-100';
+      case 'blue':
+        return 'bg-blue-500 ring-blue-100';
+      case 'amber':
+        return 'bg-amber-500 ring-amber-100';
+      case 'purple':
+      default:
+        return 'bg-indigo-600 ring-indigo-100';
     }
-    if (srcLower.includes('calendar') || srcLower.includes('event')) {
-      return <Calendar className="h-3.5 w-3.5 text-indigo-500" />;
-    }
-    if (srcLower.includes('drive') || srcLower.includes('pdf') || srcLower.includes('doc')) {
-      return <FileText className="h-3.5 w-3.5 text-amber-500" />;
-    }
-    return <Globe className="h-3.5 w-3.5 text-slate-400" />;
   };
 
-  const strengthStars = Array.from({ length: 5 }, (_, idx) => idx < (memory.strength || 3));
+  const formatSourceSubtitle = (mem: MemoryItem) => {
+    const s = mem.source;
+    if (s.email) return `${s.name} • ${s.email}`;
+    if (s.path) return `${s.name} • ${s.path}`;
+    if (s.type === 'meeting') return s.detail || 'Memory from meeting notes';
+    if (s.type === 'decision') return 'Decision';
+    return s.name;
+  };
 
   return (
-    <div
-      onClick={() => onSelect(memory)}
-      className="group relative bg-white border border-slate-200/80 hover:border-indigo-200 rounded-2xl p-4 transition-all duration-200 hover:shadow-2xs cursor-pointer flex flex-col justify-between gap-3"
-    >
-      <div className="space-y-2">
-        {/* Category & Status Indicator */}
-        <div className="flex items-center justify-between">
-          <span
+    <div className="relative flex items-start gap-3 sm:gap-5 group">
+      {/* Left Timeline Timestamp & Dot */}
+      <div className="w-16 sm:w-20 pt-4 flex items-center justify-end gap-2.5 shrink-0 text-right">
+        <span className="text-[11px] sm:text-xs font-semibold text-slate-500 whitespace-nowrap">
+          {memory.timestamp}
+        </span>
+        <div className="relative flex items-center justify-center">
+          <div
             className={cn(
-              'px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider',
-              memory.category === 'Preference' && 'bg-indigo-50 text-indigo-700 border border-indigo-100/50',
-              memory.category === 'Project' && 'bg-emerald-50 text-emerald-700 border border-emerald-100/50',
-              memory.category === 'Work' && 'bg-blue-50 text-blue-700 border border-blue-100/50',
-              memory.category === 'Personal' && 'bg-purple-50 text-purple-700 border border-purple-100/50'
+              'h-2.5 w-2.5 rounded-full ring-4 transition-transform group-hover:scale-125',
+              getDotBg(memory.dotColor)
             )}
-          >
-            {memory.category}
-          </span>
-
-          <div className="flex items-center gap-1" title="Recall Confidence Level">
-            {strengthStars.map((isLit, i) => (
-              <span
-                key={i}
-                className={cn(
-                  'h-1.5 w-1.5 rounded-full',
-                  isLit ? 'bg-indigo-600' : 'bg-slate-200'
-                )}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* Fact Text */}
-        <p className="text-xs sm:text-sm font-semibold text-slate-900 leading-relaxed group-hover:text-slate-950">
-          &quot;{memory.text}&quot;
-        </p>
-
-        {/* "Why it matters" explaining purpose */}
-        <div className="pl-2 border-l-2 border-indigo-100 space-y-0.5">
-          <span className="text-[9px] font-bold text-indigo-500 uppercase tracking-widest block">
-            Why It Matters
-          </span>
-          <p className="text-[11px] sm:text-xs text-slate-500 font-medium leading-relaxed">
-            {memory.whyItMatters}
-          </p>
+          />
         </div>
       </div>
 
-      {/* Footer Details & Action controls */}
-      <div className="flex items-center justify-between gap-2 border-t border-slate-100/60 pt-2.5 mt-1">
-        <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-medium min-w-0">
-          <span className="shrink-0">{getSourceIcon(memory.source)}</span>
-          <span className="truncate">{memory.source || 'Manual Synapse'}</span>
-          <span className="select-none text-slate-200">·</span>
-          <span className="shrink-0">{memory.timestamp}</span>
-        </div>
+      {/* Main Memory Card Container */}
+      <div
+        onClick={() => onClick(memory)}
+        className={cn(
+          'flex-1 p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/80 shadow-2xs hover:shadow-xs hover:border-indigo-200 transition-all cursor-pointer relative text-left',
+          memory.isPinned && 'border-indigo-200/90 bg-gradient-to-r from-indigo-50/20 via-white to-white'
+        )}
+      >
+        <div className="flex items-start justify-between gap-3">
+          {/* Left Icon & Text Content */}
+          <div className="flex items-start gap-3.5 min-w-0">
+            {/* App / Source Icon */}
+            <MemorySourceIcon
+              type={memory.source.type}
+              name={memory.source.name}
+              className="h-9 w-9 rounded-xl text-xs shrink-0"
+            />
 
-        <div className="flex items-center gap-1">
-          <button
-            onClick={(e) => onEdit(memory, e)}
-            className="p-1 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-slate-50 transition-all cursor-pointer"
-            title="Edit Fact"
-          >
-            <Edit3 className="h-3.5 w-3.5" />
-          </button>
-          <button
-            onClick={(e) => onForget(memory, e)}
-            className="p-1 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50/50 transition-all cursor-pointer"
-            title="Forget Fact"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
+            {/* Texts */}
+            <div className="min-w-0 space-y-1">
+              <div className="flex items-center gap-2">
+                <h4 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug group-hover:text-indigo-600 transition-colors line-clamp-1">
+                  {memory.title}
+                </h4>
+                {memory.isPinned && (
+                  <Pin className="h-3 w-3 text-indigo-500 fill-indigo-500/20 shrink-0" />
+                )}
+              </div>
+
+              <p className="text-xs text-slate-600 font-medium leading-relaxed line-clamp-2">
+                {memory.description}
+              </p>
+
+              <div className="pt-0.5 text-[11px] text-slate-400 font-medium flex items-center gap-1.5 truncate">
+                <span>{formatSourceSubtitle(memory)}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Tag & Three-dot Menu */}
+          <div className="flex items-center gap-2 shrink-0 pt-0.5" onClick={(e) => e.stopPropagation()}>
+            {/* Category / Project Tag */}
+            {memory.tag && (
+              <span className="hidden xs:inline-block text-[11px] font-semibold text-indigo-600 bg-indigo-50/80 px-2.5 py-1 rounded-lg border border-indigo-100/80 whitespace-nowrap">
+                {memory.tag}
+              </span>
+            )}
+
+            {/* Three Dot Action Button */}
+            <div className="relative">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsMenuOpen(!isMenuOpen);
+                }}
+                className="h-8 w-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+                aria-label="Memory actions"
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </button>
+
+              {/* Action Dropdown Menu */}
+              {isMenuOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-30"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsMenuOpen(false);
+                    }}
+                  />
+                  <div className="absolute right-0 top-full mt-1 w-44 bg-white rounded-2xl shadow-xl border border-slate-200/80 p-1.5 z-40 space-y-0.5 animate-in fade-in zoom-in-95 duration-150 text-left">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsMenuOpen(false);
+                        onClick(memory);
+                      }}
+                      className="w-full px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-indigo-600 rounded-lg flex items-center gap-2 transition-colors cursor-pointer"
+                    >
+                      <Eye className="h-3.5 w-3.5 text-slate-400" />
+                      <span>View details</span>
+                    </button>
+
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsMenuOpen(false);
+                        onEdit(memory);
+                      }}
+                      className="w-full px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-indigo-600 rounded-lg flex items-center gap-2 transition-colors cursor-pointer"
+                    >
+                      <Edit3 className="h-3.5 w-3.5 text-slate-400" />
+                      <span>Edit memory</span>
+                    </button>
+
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsMenuOpen(false);
+                        onTogglePin(memory);
+                      }}
+                      className="w-full px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-indigo-600 rounded-lg flex items-center gap-2 transition-colors cursor-pointer"
+                    >
+                      <Pin className="h-3.5 w-3.5 text-slate-400" />
+                      <span>{memory.isPinned ? 'Unpin memory' : 'Pin memory'}</span>
+                    </button>
+
+                    {memory.source.url && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsMenuOpen(false);
+                          onOpenSource(memory);
+                        }}
+                        className="w-full px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-indigo-600 rounded-lg flex items-center gap-2 transition-colors cursor-pointer"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
+                        <span>Open source</span>
+                      </button>
+                    )}
+
+                    <div className="border-t border-slate-100 my-1" />
+
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsMenuOpen(false);
+                        onForget(memory);
+                      }}
+                      className="w-full px-2.5 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50 rounded-lg flex items-center gap-2 transition-colors cursor-pointer"
+                    >
+                      <Trash2 className="h-3.5 w-3.5 text-rose-500" />
+                      <span>Forget memory</span>
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>

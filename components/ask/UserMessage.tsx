@@ -5,27 +5,33 @@ import { cn } from '../../lib/utils';
 
 export interface UserMessageProps {
   text: string;
-  timestamp: string;
+  timestamp?: string;
+  avatarUrl?: string;
   className?: string;
 }
 
 export const UserMessage: React.FC<UserMessageProps> = ({
   text,
-  timestamp,
+  timestamp = 'Today, 9:24 AM',
+  avatarUrl,
   className,
 }) => {
   return (
-    <div className={cn('my-6 animate-fadeIn max-w-2xl mx-auto w-full', className)}>
-      <div className="p-3.5 sm:p-4 rounded-xl bg-slate-50 border border-slate-100 space-y-1">
-        <div className="flex items-center justify-between text-[9px] font-bold text-slate-400 uppercase tracking-widest">
-          <span>User Question</span>
-          <span className="font-normal font-mono normal-case">{timestamp}</span>
-        </div>
-        <p className="text-xs sm:text-sm font-semibold text-slate-950 leading-relaxed font-sans">
+    <div className={cn('flex items-center justify-end gap-3 my-4 animate-fadeIn select-text', className)}>
+      {/* User Bubble */}
+      <div className="bg-[#f0f2f8] border border-slate-200/50 rounded-2xl sm:rounded-full px-4 sm:px-5 py-2.5 sm:py-3 flex flex-wrap items-center justify-between gap-3 sm:gap-6 max-w-xl shadow-2xs">
+        <p className="text-[13px] sm:text-sm font-medium text-slate-800 leading-snug">
           {text}
         </p>
+        <span className="text-[11px] text-slate-400 font-normal shrink-0">
+          {timestamp}
+        </span>
+      </div>
+
+      {/* User Avatar Circle */}
+      <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-gradient-to-tr from-slate-900 to-indigo-950 text-white flex items-center justify-center font-bold text-xs shrink-0 border border-slate-200 shadow-2xs overflow-hidden select-none">
+        <span className="text-slate-100 font-bold text-xs">A</span>
       </div>
     </div>
   );
 };
-

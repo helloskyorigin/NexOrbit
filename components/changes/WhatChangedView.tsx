@@ -1,395 +1,554 @@
 'use client';
-import React, { useState } from 'react';
+
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
+  Sparkles, 
+  Filter, 
+  ChevronDown, 
+  Plus, 
+  Bell, 
+  Check, 
+  Search, 
+  RotateCcw,
   ArrowRight,
-  Filter,
-  Search,
-  Sparkles,
-  ChevronDown,
-  Mail,
-  Calendar as CalendarIcon,
-  HardDrive
+  SlidersHorizontal,
+  ChevronRight,
+  Info
 } from 'lucide-react';
+import { 
+  ChangeFeedItem, 
+  CategoryFilter, 
+  ConnectorSourceId, 
+  ViewToggleControls 
+} from './types';
+import { 
+  INITIAL_CHANGE_ITEMS 
+} from './mockData';
+import { CategoryFilterTabs } from './CategoryFilterTabs';
+import { ChangeRow } from './ChangeRow';
+import { GroupedChangeRow } from './GroupedChangeRow';
+import { RightIntelligenceRail } from './RightIntelligenceRail';
+import { ChangeDetailDrawer } from './ChangeDetailDrawer';
+import { FilterPopover, FilterState } from './FilterPopover';
+import { DateSelectorPopover } from './DateSelectorPopover';
 import { cn } from '../../lib/utils';
-
-export interface SubChange {
-  id: string;
-  title: string;
-  summary: string;
-  sourceName: string;
-  timestamp: string;
-}
-
-export interface ChangeItem {
-  id: string;
-  sourceId: string;
-  sourceName: string;
-  title: string;
-  summary: string;
-  timestamp: string;
-  timeSection: 'JUST NOW' | 'TODAY' | 'YESTERDAY' | 'EARLIER';
-  urgency: 'high' | 'medium' | 'low';
-  category: string;
-  whyItMatters?: string;
-  actionLabel?: string;
-  isRead?: boolean;
-  subChanges?: SubChange[];
-}
-
-const ENHANCED_MOCK_CHANGES: ChangeItem[] = [
-  {
-    id: 'grp-1',
-    sourceId: 'multi',
-    sourceName: 'Gmail · Drive',
-    title: 'Project Alpha',
-    summary: 'Client deadline changed. "Friday" → "Monday". Proposal modified.',
-    timestamp: '12 min ago',
-    timeSection: 'JUST NOW',
-    urgency: 'high',
-    category: 'Project Update',
-    whyItMatters: 'This conflicts with the date mentioned in the latest project email. Team planning drift detected.',
-    actionLabel: 'Review conflict',
-    isRead: false,
-    subChanges: [
-      {
-        id: 'chg-1',
-        title: 'Deadline Update from Rahul',
-        summary: 'Rahul confirmed the revised delivery date for Project Alpha phase 1 specs is Friday at 5:00 PM.',
-        sourceName: 'Gmail',
-        timestamp: '12 min ago'
-      },
-      {
-        id: 'chg-3',
-        title: 'New Doc Shared: "Alpha_Launch_Doc_v2.pdf"',
-        summary: 'Design specifications and user journey maps uploaded by Product Lead.',
-        sourceName: 'Google Drive',
-        timestamp: '2 hours ago'
-      }
-    ]
-  },
-  {
-    id: 'chg-2',
-    sourceId: 'calendar',
-    sourceName: 'Google Calendar',
-    title: 'Schedule Shift: Product Sync',
-    summary: 'Moved to 4:30 PM due to conflict.',
-    timestamp: '35 min ago',
-    timeSection: 'TODAY',
-    urgency: 'medium',
-    category: 'Calendar Event',
-    whyItMatters: 'This overlaps with your scheduled Focus Block.',
-    actionLabel: 'Reschedule block',
-    isRead: false,
-  },
-  {
-    id: 'chg-4',
-    sourceId: 'gmail',
-    sourceName: 'Gmail',
-    title: 'Client Inquiry regarding SLA terms',
-    summary: 'Enterprise client requested clarification on support response times in new contract draft.',
-    timestamp: '3 hours ago',
-    timeSection: 'TODAY',
-    urgency: 'low',
-    category: 'Email Thread',
-    whyItMatters: 'SLA questions typically require a response within 24 hours.',
-    actionLabel: 'Prepare response',
-    isRead: true,
-  },
-  {
-    id: 'chg-5',
-    sourceId: 'calendar',
-    sourceName: 'Google Calendar',
-    title: 'Design Review RSVP confirmed',
-    summary: '4 out of 5 attendees confirmed attendance for tomorrow morning design review.',
-    timestamp: '5 hours ago',
-    timeSection: 'EARLIER',
-    urgency: 'low',
-    category: 'Calendar Event',
-    whyItMatters: 'Key decision makers are present for approval.',
-    actionLabel: 'See meeting',
-    isRead: true,
-  },
-];
+import Image from 'next/image';
 
 export interface WhatChangedViewProps {
   onNavigate?: (pageId: string) => void;
   className?: string;
 }
 
-export const WhatChangedView: React.FC<WhatChangedViewProps> = ({ className }) => {
-  const [changes, setChanges] = useState<ChangeItem[]>(ENHANCED_MOCK_CHANGES);
+export const WhatChangedView: React.FC<WhatChangedViewProps> = ({
+  onNavigate,
+  className,
+}) => {
+  // Main Data States
+  const [items, setItems] = useState<ChangeFeedItem[]>(INITIAL_CHANGE_ITEMS);
+  const [activeCategory, setActiveCategory] = useState<CategoryFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
+  const [selectedSourceFilter, setSelectedSourceFilter] = useState<ConnectorSourceId | null>(null);
+  const [selectedDateRange, setSelectedDateRange] = useState('Today, May 14');
+  const [showMoreLoaded, setShowMoreLoaded] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const toggleExpand = (id: string, e: React.MouseEvent) => {
-    // Only toggle if not clicking the action button
-    if ((e.target as HTMLElement).closest('button.action-btn')) return;
-    
-    setExpandedItems(prev => ({ ...prev, [id]: !prev[id] }));
-    // Mark as read when expanded
-    setChanges(prev => prev.map(c => c.id === id ? { ...c, isRead: true } : c));
-  };
-
-  const filteredChanges = changes.filter((item) => {
-    const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          item.summary.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesSearch;
+  // View Controls Toggles
+  const [viewControls, setViewControls] = useState<ViewToggleControls>({
+    connectedApps: true,
+    yourTeam: true,
+    mentions: true,
+    tasksAndProjects: true,
   });
 
-  const sections = ['JUST NOW', 'TODAY', 'YESTERDAY', 'EARLIER'] as const;
-  
+  // Modal / Popover / Drawer States
+  const [isFilterPopoverOpen, setIsFilterPopoverOpen] = useState(false);
+  const [isDatePopoverOpen, setIsDatePopoverOpen] = useState(false);
+  const [activeDrawerItem, setActiveDrawerItem] = useState<ChangeFeedItem | null>(null);
+  const [popoverFilters, setPopoverFilters] = useState<FilterState>({
+    importance: 'all',
+    unreadOnly: false,
+    source: 'all',
+  });
+
+  // Toast Helper
+  const triggerToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage((current) => (current === msg ? null : current));
+    }, 3000);
+  };
+
+  // Toggle single item read state
+  const handleToggleRead = (id: string) => {
+    setItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, isRead: true } : item))
+    );
+  };
+
+  // Mark all as read
+  const handleMarkAllAsRead = () => {
+    setItems((prev) => prev.map((item) => ({ ...item, isRead: true })));
+    triggerToast('All changes marked as read');
+  };
+
+  // Handle View Control Toggle
+  const handleToggleViewControl = (key: keyof ViewToggleControls) => {
+    setViewControls((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
+
+  // Handle Ask NEXORBIT
+  const handleAskNexorbit = (item: ChangeFeedItem) => {
+    if (onNavigate) {
+      onNavigate('ask-my-world');
+    }
+  };
+
+  // Filter Pipeline
+  const filteredItems = useMemo(() => {
+    return items.filter((item) => {
+      // 1. Search Query Filter
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matchesTitle = item.title.toLowerCase().includes(q);
+        const matchesSub = item.contextSubtitle.toLowerCase().includes(q);
+        const matchesSource = item.sourceName.toLowerCase().includes(q);
+        const matchesWhat = item.whatChanged.toLowerCase().includes(q);
+        if (!matchesTitle && !matchesSub && !matchesSource && !matchesWhat) {
+          return false;
+        }
+      }
+
+      // 2. Category Tab Filter
+      if (activeCategory !== 'all') {
+        if (item.category !== activeCategory && !item.isGroup) {
+          return false;
+        }
+      }
+
+      // 3. Source Filter from Right Rail
+      if (selectedSourceFilter) {
+        if (item.sourceId !== selectedSourceFilter && !item.sourceName.toLowerCase().includes(selectedSourceFilter)) {
+          return false;
+        }
+      }
+
+      // 4. Popover Filter: Importance
+      if (popoverFilters.importance !== 'all') {
+        if (item.importance !== popoverFilters.importance) {
+          return false;
+        }
+      }
+
+      // 5. Popover Filter: Unread Only
+      if (popoverFilters.unreadOnly && item.isRead) {
+        return false;
+      }
+
+      // 6. Popover Filter: Source
+      if (popoverFilters.source !== 'all') {
+        if (item.sourceId !== popoverFilters.source) {
+          return false;
+        }
+      }
+
+      // 7. View Controls Toggles
+      if (!viewControls.connectedApps && (item.sourceId === 'drive' || item.sourceId === 'notion' || item.sourceId === 'github')) {
+        return false;
+      }
+      if (!viewControls.mentions && item.category === 'mentions') {
+        return false;
+      }
+      if (!viewControls.tasksAndProjects && (item.category === 'tasks' || item.sourceId === 'asana')) {
+        return false;
+      }
+
+      // 8. Load More filter (hide 'Earlier' section until Load More is clicked)
+      if (!showMoreLoaded && item.timeSection === 'Earlier') {
+        return false;
+      }
+
+      return true;
+    });
+  }, [
+    items,
+    searchQuery,
+    activeCategory,
+    selectedSourceFilter,
+    popoverFilters,
+    viewControls,
+    showMoreLoaded,
+  ]);
+
+  // Section Grouping
+  const sections = useMemo(() => {
+    const availableSections: ('Earlier Today' | 'Yesterday' | 'Earlier')[] = [
+      'Earlier Today',
+      'Yesterday',
+      'Earlier',
+    ];
+    return availableSections
+      .map((sec) => ({
+        section: sec,
+        items: filteredItems.filter((i) => i.timeSection === sec),
+      }))
+      .filter((grp) => grp.items.length > 0);
+  }, [filteredItems]);
+
+  const unreadCount = useMemo(() => items.filter((i) => !i.isRead).length, [items]);
+
   return (
-    <div className={cn("min-h-screen bg-[#fafafa] font-sans selection:bg-indigo-100 selection:text-indigo-900 pb-24", className)}>
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14">
-        
-        {/* Header */}
-        <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-5 mb-10">
-          <div className="space-y-1.5">
-            <h1 className="text-2xl sm:text-[26px] font-bold text-slate-900 tracking-tight">What Changed</h1>
-            <p className="text-sm text-slate-500 font-medium tracking-tight">Important updates across your connected world.</p>
-            <div className="mt-4 flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest pt-2">
-              <svg className="h-3.5 w-3.5 text-indigo-500 animate-spin shrink-0" style={{ animationDuration: '8s' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <circle cx="12" cy="12" r="3" fill="currentColor" />
-                <ellipse cx="12" cy="12" rx="9" ry="3" transform="rotate(-30 12 12)" strokeLinecap="round" />
-              </svg>
-              NEXORBIT is up to date
+    <div
+      className={cn(
+        "relative min-h-screen font-sans selection:bg-indigo-100 selection:text-indigo-900 pb-28",
+        className
+      )}
+    >
+      {/* 1. SUBTLE AMBIENT ORBITAL BACKGROUND (Real SVG / Ambient curves) */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+        <svg
+          className="absolute -top-32 -left-48 w-[1000px] h-[1000px] text-indigo-500/6"
+          viewBox="0 0 1000 1000"
+          fill="none"
+        >
+          <circle cx="500" cy="500" r="450" stroke="currentColor" strokeWidth="1" strokeDasharray="6 8" />
+          <circle cx="500" cy="500" r="350" stroke="currentColor" strokeWidth="1" />
+          <circle cx="500" cy="500" r="220" stroke="currentColor" strokeWidth="0.8" strokeDasharray="3 6" />
+          <circle cx="780" cy="320" r="4" fill="#6366F1" className="opacity-40 animate-pulse" />
+          <circle cx="280" cy="650" r="3" fill="#818CF8" className="opacity-30" />
+        </svg>
+
+        <svg
+          className="absolute top-1/3 -right-64 w-[900px] h-[900px] text-purple-500/5"
+          viewBox="0 0 900 900"
+          fill="none"
+        >
+          <ellipse cx="450" cy="450" rx="400" ry="250" transform="rotate(-25 450 450)" stroke="currentColor" strokeWidth="1" />
+          <circle cx="450" cy="450" r="280" stroke="currentColor" strokeWidth="0.8" strokeDasharray="4 8" />
+          <circle cx="320" cy="380" r="3.5" fill="#A855F7" className="opacity-40" />
+        </svg>
+
+        <div className="absolute top-20 right-1/4 w-96 h-96 bg-gradient-to-br from-indigo-100/30 via-purple-100/20 to-transparent rounded-full blur-3xl pointer-events-none" />
+      </div>
+
+      {/* 2. TOAST NOTIFICATION */}
+      <AnimatePresence>
+        {toastMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed top-6 right-6 z-50 bg-slate-900 text-white px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2 text-xs font-semibold"
+          >
+            <Check className="h-4 w-4 text-emerald-400" />
+            <span>{toastMessage}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8">
+        {/* 3. TOP LEVEL BRAND / STATUS HEADER */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-slate-200/60 mb-6">
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl sm:text-[28px] font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                <span>What Changed</span>
+                <span className="text-indigo-600 font-normal">✦</span>
+              </h1>
+            </div>
+            <p className="text-xs sm:text-[13px] text-slate-500 font-medium tracking-tight mt-1">
+              Track important changes across your digital world.
+            </p>
+          </div>
+
+          {/* Top Right Utility Badges */}
+          <div className="flex items-center gap-3 self-start lg:self-center">
+            {/* Synced Status Badge */}
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-slate-200/80 shadow-2xs text-xs font-medium text-slate-700">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <span>Synced</span>
+            </div>
+
+            {/* Notification Bell */}
+            <button
+              onClick={() => triggerToast(`You have ${unreadCount} unread change signals`)}
+              className="relative h-9 w-9 rounded-full bg-white border border-slate-200/80 flex items-center justify-center text-slate-600 hover:text-slate-900 transition-colors shadow-2xs cursor-pointer"
+            >
+              <Bell className="h-4 w-4" />
+              {unreadCount > 0 && (
+                <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-indigo-600 ring-2 ring-white" />
+              )}
+            </button>
+
+            {/* User Avatar */}
+            <div className="relative h-9 w-9 rounded-full overflow-hidden ring-2 ring-indigo-500/20 shrink-0 cursor-pointer">
+              <Image
+                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80"
+                alt="Aryan Mehta"
+                fill
+                className="object-cover"
+                referrerPolicy="no-referrer"
+              />
             </div>
           </div>
-          
-          <div className="flex items-center gap-2 self-start sm:self-end">
-            <div className="flex items-center p-1 bg-white border border-slate-200/60 rounded-xl shadow-xs text-[11px] font-semibold">
-              <button className="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-900 shadow-xs cursor-pointer">Today</button>
-              <button className="px-3 py-1.5 rounded-lg text-slate-500 hover:text-slate-900 cursor-pointer transition-colors">7 days</button>
-              <button className="px-3 py-1.5 rounded-lg text-slate-500 hover:text-slate-900 cursor-pointer transition-colors">All</button>
-            </div>
-            <button className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 rounded-xl transition-colors border border-slate-200/60 shadow-xs text-[11px] font-bold cursor-pointer h-[32px]">
-              <Filter className="h-3 w-3" />
-              Filter
+        </div>
+
+        {/* 4. ACTION CONTROLS & SEARCH BAR */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          {/* Category Filter Tabs */}
+          <CategoryFilterTabs
+            activeCategory={activeCategory}
+            onSelectCategory={setActiveCategory}
+            className="flex-1 min-w-0"
+          />
+
+          {/* Action Buttons on the Right */}
+          <div className="flex items-center gap-2.5 shrink-0">
+            {/* Filters Button */}
+            <button
+              id="open-filters-btn"
+              onClick={() => setIsFilterPopoverOpen(true)}
+              className={cn(
+                "flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-150 cursor-pointer shadow-2xs border",
+                popoverFilters.importance !== 'all' || popoverFilters.unreadOnly || popoverFilters.source !== 'all'
+                  ? "bg-indigo-50 text-indigo-700 border-indigo-200"
+                  : "bg-white hover:bg-slate-50 text-slate-700 border-slate-200/80"
+              )}
+            >
+              <Filter className="h-3.5 w-3.5 text-slate-500" />
+              <span>Filters</span>
+              {(popoverFilters.importance !== 'all' || popoverFilters.unreadOnly || popoverFilters.source !== 'all') && (
+                <span className="h-1.5 w-1.5 rounded-full bg-indigo-600" />
+              )}
+            </button>
+
+            {/* Date Selector */}
+            <button
+              id="open-date-selector-btn"
+              onClick={() => setIsDatePopoverOpen(true)}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/80 shadow-2xs transition-colors cursor-pointer"
+            >
+              <span>{selectedDateRange}</span>
+              <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+            </button>
+
+            {/* Mark all as read */}
+            <button
+              id="mark-all-read-btn"
+              onClick={handleMarkAllAsRead}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-[#4F46E5] hover:bg-[#4338CA] text-white shadow-[0_1px_3px_rgba(79,70,229,0.2)] transition-all cursor-pointer select-none"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              <span>Mark all as read</span>
             </button>
           </div>
-        </header>
+        </div>
 
-        {/* Connected World Signal & Search */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-          <div className="flex items-center gap-2 text-[11px] font-medium text-slate-400 pl-1">
-            <div className="flex items-center gap-1">
-               <Mail className="h-3 w-3"/>
-               <CalendarIcon className="h-3 w-3"/>
-               <HardDrive className="h-3 w-3"/>
-            </div>
-            <span>5 sources · Synced recently</span>
+        {/* 5. SEARCH & ACTIVE FILTER STATUS */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+          {/* Active Filter Chips / Status */}
+          <div className="flex items-center gap-2 flex-wrap text-xs text-slate-500">
+            {selectedSourceFilter && (
+              <div className="inline-flex items-center gap-1.5 bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-lg border border-indigo-200/60 font-semibold">
+                <span>Source: {selectedSourceFilter}</span>
+                <button
+                  onClick={() => setSelectedSourceFilter(null)}
+                  className="hover:text-indigo-900 cursor-pointer ml-0.5"
+                >
+                  ×
+                </button>
+              </div>
+            )}
+
+            {searchQuery && (
+              <div className="inline-flex items-center gap-1.5 bg-slate-100 text-slate-700 px-2.5 py-1 rounded-lg font-medium">
+                <span>Search: &quot;{searchQuery}&quot;</span>
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="hover:text-slate-900 cursor-pointer ml-0.5"
+                >
+                  ×
+                </button>
+              </div>
+            )}
+
+            <span className="text-[11px] text-slate-400 font-medium">
+              Showing {filteredItems.length} changes across 5 connected apps
+            </span>
           </div>
 
+          {/* Search Box */}
           <div className="relative max-w-xs w-full">
-            <Search className="absolute left-3.5 top-2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+            <Search className="absolute left-3.5 top-2.5 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search changes..."
-              className="w-full bg-transparent border-b border-slate-200 pl-9 pr-3 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-400 transition-colors font-medium"
+              className="w-full bg-white border border-slate-200/80 rounded-xl pl-9 pr-3 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 transition-all font-medium shadow-2xs"
             />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 top-2 text-slate-400 hover:text-slate-600 text-xs"
+              >
+                ✕
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Hero Summary */}
-        <div className="relative mb-12 py-5 px-6 overflow-hidden rounded-2xl border border-indigo-100/60 bg-indigo-50/40">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-indigo-100/60 via-transparent to-transparent opacity-80 pointer-events-none" />
-          <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="space-y-0.5">
-              <h2 className="text-[15px] font-bold text-slate-900 tracking-tight">
-                4 meaningful changes since your last visit.
-              </h2>
-              <p className="text-[13px] font-medium text-slate-600">
-                <span className="text-indigo-600 font-bold">1</span> may need your attention.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Timeline */}
-        {filteredChanges.length === 0 ? (
-          <div className="py-24 text-center space-y-4">
-            <svg className="h-10 w-10 text-slate-300 mx-auto animate-spin" style={{ animationDuration: '10s' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <circle cx="12" cy="12" r="3" fill="currentColor" />
-              <ellipse cx="12" cy="12" rx="9" ry="3" transform="rotate(-30 12 12)" strokeLinecap="round" />
-            </svg>
-            <div className="space-y-1">
-              <h4 className="text-sm font-bold text-slate-900 tracking-tight">Your world is quiet.</h4>
-              <p className="text-xs text-slate-500 font-medium">Nothing important changed since your last visit.</p>
-            </div>
-          </div>
-        ) : (
-          <div className="relative">
-            {/* Timeline orbital track */}
-            <div className="absolute left-[11px] top-6 bottom-0 w-[2px] bg-gradient-to-b from-indigo-100/80 via-slate-200/60 to-transparent pointer-events-none" />
-            
-            <div className="space-y-10">
-              {sections.map(section => {
-                const sectionChanges = filteredChanges.filter(c => c.timeSection === section);
-                if (sectionChanges.length === 0) return null;
-
-                return (
-                  <div key={section} className="relative">
-                    <div className="flex items-center gap-4 mb-4">
-                      <div className="h-6 w-6 bg-[#fafafa] flex items-center justify-center shrink-0 z-10 ml-[0px]">
-                         <div className="h-1.5 w-1.5 rounded-full bg-slate-300" />
-                      </div>
-                      <h3 className="text-[9.5px] font-bold text-slate-400 uppercase tracking-widest">{section}</h3>
+        {/* 6. MAIN WORKSPACE GRID (Feed + Right Intelligence Rail) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* MAIN CHANGE FEED (Left / Center Column - 8 Cols) */}
+          <div className="lg:col-span-8 space-y-8 min-w-0">
+            {sections.length === 0 ? (
+              /* EMPTY STATE */
+              <div className="bg-white rounded-3xl border border-slate-100 p-12 text-center shadow-[0_1px_3px_rgba(0,0,0,0.02)] space-y-4">
+                <div className="relative mx-auto h-16 w-16 rounded-full bg-indigo-50/70 border border-indigo-100 flex items-center justify-center text-indigo-600">
+                  <Sparkles className="h-7 w-7" />
+                  <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-white" />
+                </div>
+                <div className="space-y-1 max-w-sm mx-auto">
+                  <h3 className="text-base font-bold text-slate-900">
+                    Nothing changed here.
+                  </h3>
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    Your world is quiet for now. No new changes match the active filters.
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    setActiveCategory('all');
+                    setSelectedSourceFilter(null);
+                    setSearchQuery('');
+                    setPopoverFilters({
+                      importance: 'all',
+                      unreadOnly: false,
+                      source: 'all',
+                    });
+                  }}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors cursor-pointer"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" />
+                  <span>Reset all filters</span>
+                </button>
+              </div>
+            ) : (
+              /* FEED SECTIONS */
+              <div className="space-y-8">
+                {sections.map(({ section, items: sectionItems }) => (
+                  <div key={section} className="space-y-3">
+                    {/* Section Header */}
+                    <div className="flex items-center gap-2 px-1">
+                      <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                        {section}
+                      </span>
+                      <div className="h-[1px] flex-1 bg-slate-100" />
                     </div>
 
-                    <div className="space-y-1">
-                      {sectionChanges.map((change, idx) => (
-                        <ChangeRow 
-                          key={change.id} 
-                          item={change} 
-                          isExpanded={expandedItems[change.id]} 
-                          onToggle={(e) => toggleExpand(change.id, e)}
-                          staggerDelay={idx * 0.1}
-                        />
-                      ))}
+                    {/* Section Items List */}
+                    <div className="space-y-3">
+                      {sectionItems.map((item) =>
+                        item.isGroup ? (
+                          <GroupedChangeRow
+                            key={item.id}
+                            item={item}
+                            onOpenDetailDrawer={setActiveDrawerItem}
+                            onAskNexorbit={handleAskNexorbit}
+                          />
+                        ) : (
+                          <ChangeRow
+                            key={item.id}
+                            item={item}
+                            onOpenDetailDrawer={setActiveDrawerItem}
+                            onAskNexorbit={handleAskNexorbit}
+                            onToggleRead={handleToggleRead}
+                          />
+                        )
+                      )}
                     </div>
                   </div>
-                );
-              })}
+                ))}
+
+                {/* LOAD MORE BUTTON */}
+                {!showMoreLoaded && (
+                  <div className="pt-2 text-center">
+                    <button
+                      id="load-more-btn"
+                      onClick={() => {
+                        setShowMoreLoaded(true);
+                        triggerToast('Loaded earlier change signals');
+                      }}
+                      className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-white hover:bg-slate-50 text-indigo-600 font-semibold text-xs border border-indigo-100 shadow-[0_1px_3px_rgba(0,0,0,0.03)] hover:shadow-xs transition-all cursor-pointer"
+                    >
+                      <span>Load more</span>
+                      <ChevronDown className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* RIGHT INTELLIGENCE RAIL (Right Column - 4 Cols) */}
+          <div className="lg:col-span-4 min-w-0">
+            <div className="sticky top-6">
+              <RightIntelligenceRail
+                selectedSourceFilter={selectedSourceFilter}
+                onSelectSourceFilter={setSelectedSourceFilter}
+                viewControls={viewControls}
+                onToggleViewControl={handleToggleViewControl}
+                totalNewChangesCount={items.length * 2 + 2}
+              />
             </div>
           </div>
-        )}
+        </div>
       </div>
+
+      {/* 7. SLIDING CHANGE DETAIL DRAWER */}
+      <ChangeDetailDrawer
+        item={activeDrawerItem}
+        isOpen={Boolean(activeDrawerItem)}
+        onClose={() => setActiveDrawerItem(null)}
+        onAskNexorbit={handleAskNexorbit}
+      />
+
+      {/* 8. FILTER POPOVER */}
+      <FilterPopover
+        isOpen={isFilterPopoverOpen}
+        onClose={() => setIsFilterPopoverOpen(false)}
+        filters={popoverFilters}
+        onApplyFilters={(newFilters) => {
+          setPopoverFilters(newFilters);
+          triggerToast('Filters updated');
+        }}
+        onResetFilters={() => {
+          setPopoverFilters({
+            importance: 'all',
+            unreadOnly: false,
+            source: 'all',
+          });
+          triggerToast('Filters reset');
+        }}
+      />
+
+      {/* 9. DATE SELECTOR POPOVER */}
+      <DateSelectorPopover
+        isOpen={isDatePopoverOpen}
+        onClose={() => setIsDatePopoverOpen(false)}
+        selectedRange={selectedDateRange}
+        onSelectRange={(range) => {
+          setSelectedDateRange(range);
+          triggerToast(`Date range set to ${range}`);
+        }}
+      />
     </div>
   );
 };
-
-const ChangeRow = ({ item, isExpanded, onToggle, staggerDelay }: { item: ChangeItem, isExpanded: boolean, onToggle: (e: React.MouseEvent) => void, staggerDelay: number }) => {
-  const urgencyColor = item.urgency === 'high' ? 'bg-rose-500' : item.urgency === 'medium' ? 'bg-indigo-500' : 'bg-slate-300';
-  const hasDetails = item.whyItMatters || item.subChanges;
-
-  return (
-    <motion.div 
-      initial={{ opacity: 0, y: 10, scale: 0.98 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.4, delay: staggerDelay, ease: [0.23, 1, 0.32, 1] }}
-      layout
-      className={cn(
-        "relative pl-[36px] pr-4 py-4 group rounded-2xl transition-colors cursor-pointer text-left w-full border border-transparent",
-        isExpanded ? "bg-white shadow-xs border-slate-100" : "hover:bg-slate-50"
-      )}
-      onClick={onToggle}
-    >
-      {/* Timeline Node - Orbital Connection Point */}
-      <div className="absolute left-[8px] top-[24px] flex items-center justify-center z-10">
-         <div className={cn(
-           "h-2 w-2 rounded-full ring-4 ring-[#fafafa] transition-all duration-300", 
-           urgencyColor,
-           !item.isRead && item.urgency === 'high' ? "shadow-[0_0_10px_rgba(244,63,94,0.5)]" : ""
-         )} />
-      </div>
-
-      {/* Main Content */}
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-        <div className="flex-1 min-w-0 space-y-1.5">
-           <div className="flex items-center gap-2 flex-wrap">
-              <h3 className={cn(
-                "text-[13px] tracking-tight leading-snug font-sans",
-                item.urgency === 'high' ? "font-bold text-slate-950" : "font-semibold text-slate-900"
-              )}>
-                {item.title}
-              </h3>
-              {item.subChanges && (
-                <span className="text-[9px] font-bold bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded uppercase tracking-widest">
-                  {item.subChanges.length} changes
-                </span>
-              )}
-           </div>
-           <p className="text-xs text-slate-600 leading-relaxed pr-4 font-normal">
-             {item.summary}
-           </p>
-
-           <div className="flex items-center gap-2 text-[10.5px] text-slate-400 font-medium pt-1">
-              <span className="flex items-center gap-1">
-                {item.sourceName.toLowerCase().includes('gmail') && <Mail className="h-2.5 w-2.5" />}
-                {item.sourceName.toLowerCase().includes('calendar') && <CalendarIcon className="h-2.5 w-2.5" />}
-                {item.sourceName.toLowerCase().includes('drive') && <HardDrive className="h-2.5 w-2.5" />}
-                {item.sourceName}
-              </span>
-              <span className="text-slate-300">·</span>
-              <span className="font-mono text-[9.5px]">{item.timestamp}</span>
-           </div>
-        </div>
-
-        {/* Action Button */}
-        <div className={cn(
-          "shrink-0 pt-1 transition-all duration-200 flex flex-row sm:flex-col items-center sm:items-end gap-3",
-          !isExpanded ? "opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:translate-x-2 sm:group-hover:translate-x-0" : "opacity-100"
-        )}>
-           {item.actionLabel && (
-              <button 
-                className="action-btn text-[11px] font-bold text-indigo-700 hover:text-indigo-800 flex items-center gap-1 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors border border-indigo-100/50 cursor-pointer"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  // Action handling would go here
-                }}
-              >
-                 {item.actionLabel} <ArrowRight className="h-3 w-3" />
-              </button>
-           )}
-           {hasDetails && (
-             <ChevronDown className={cn("hidden sm:block h-3.5 w-3.5 text-slate-300 transition-transform duration-300", isExpanded && "rotate-180")} />
-           )}
-        </div>
-      </div>
-
-      {/* Expanded State (Accordion) */}
-      <AnimatePresence>
-        {isExpanded && hasDetails && (
-           <motion.div 
-             initial={{ opacity: 0, height: 0 }}
-             animate={{ opacity: 1, height: 'auto' }}
-             exit={{ opacity: 0, height: 0 }}
-             transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
-             className="overflow-hidden"
-           >
-              <div className="pt-5 pb-1 space-y-5">
-                 {/* WHY IT MATTERS */}
-                 {item.whyItMatters && (
-                    <div className="pl-3.5 border-l-2 border-indigo-200 bg-indigo-50/40 py-3 pr-4 rounded-r-xl">
-                       <span className="text-[9px] font-bold text-indigo-600 uppercase tracking-widest flex items-center gap-1.5 mb-1.5">
-                          <Sparkles className="h-3 w-3" /> Why it matters
-                       </span>
-                       <p className="text-xs text-slate-800 leading-relaxed font-medium">
-                         {item.whyItMatters}
-                       </p>
-                    </div>
-                 )}
-
-                 {/* Grouped sub-items or details */}
-                 {item.subChanges && (
-                    <div className="space-y-3 mt-4 pt-4 border-t border-slate-100">
-                       <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-2">Related Evidence</span>
-                       {item.subChanges.map(sub => (
-                          <div key={sub.id} className="flex items-start gap-3 text-xs py-1">
-                             <div className="mt-[6px] h-1.5 w-1.5 rounded-full bg-slate-300 shrink-0" />
-                             <div className="flex-1 min-w-0">
-                                <span className="font-semibold text-slate-900 mr-2">{sub.title}</span>
-                                <span className="text-slate-500 font-normal leading-relaxed">{sub.summary}</span>
-                                <div className="flex items-center gap-1 text-[9.5px] font-medium text-slate-400 mt-1 font-mono">
-                                  {sub.sourceName.toLowerCase().includes('gmail') && <Mail className="h-2.5 w-2.5" />}
-                                  {sub.sourceName.toLowerCase().includes('calendar') && <CalendarIcon className="h-2.5 w-2.5" />}
-                                  {sub.sourceName.toLowerCase().includes('drive') && <HardDrive className="h-2.5 w-2.5" />}
-                                  <span>{sub.sourceName}</span>
-                                  <span>·</span>
-                                  <span>{sub.timestamp}</span>
-                                </div>
-                             </div>
-                          </div>
-                       ))}
-                    </div>
-                 )}
-              </div>
-           </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
-  )
-}

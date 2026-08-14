@@ -58,7 +58,7 @@ export const InsightCard: React.FC<InsightCardProps> = ({
                 >
                   {src.connectorName}
                 </button>
-                {idx < insight.sources.length - 1 && (
+                {idx < (insight.sources?.length ?? 0) - 1 && (
                   <span className="text-slate-300 select-none">·</span>
                 )}
               </React.Fragment>
