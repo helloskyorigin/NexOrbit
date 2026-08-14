@@ -61,7 +61,7 @@ export const Modal: React.FC<ModalProps> = ({
       >
         {/* Header */}
         {(title || description) && (
-          <div className="px-6 pt-5 pb-4 border-b border-slate-100 flex items-start justify-between">
+          <div className="px-6 pt-5 pb-4 border-b border-slate-100 flex items-start justify-between safe-pt">
             <div>
               {title && <h3 className="text-base font-semibold text-slate-900">{title}</h3>}
               {description && <p className="text-xs text-slate-500 mt-1">{description}</p>}
@@ -77,11 +77,11 @@ export const Modal: React.FC<ModalProps> = ({
         )}
 
         {/* Body */}
-        <div className="px-6 py-5 max-h-[70vh] overflow-y-auto">{children}</div>
+        <div className="px-6 py-5 max-h-[70vh] overflow-y-auto safe-pb">{children}</div>
 
         {/* Footer */}
         {footer && (
-          <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3">
+          <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3 safe-pb">
             {footer}
           </div>
         )}

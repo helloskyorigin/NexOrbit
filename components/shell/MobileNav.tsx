@@ -64,7 +64,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({
       {/* Mobile Bottom Sticky Bar */}
       <nav
         className={cn(
-          'fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200/90 px-3 py-2 flex items-center justify-around lg:hidden select-none shadow-lg',
+          'fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200/90 px-3 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] flex items-center justify-around lg:hidden select-none shadow-lg',
           className
         )}
       >
@@ -150,6 +150,19 @@ export const MobileNav: React.FC<MobileNavProps> = ({
             >
               <SettingsIcon className="h-4 w-4 text-indigo-500" />
               <span>Settings</span>
+            </button>
+
+            <button
+              onClick={() => handleSelectMoreItem('support')}
+              className={cn(
+                'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-colors',
+                activePage === 'support'
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-700 hover:bg-slate-100'
+              )}
+            >
+              <Sparkles className="h-4 w-4 text-indigo-500" />
+              <span>Support</span>
             </button>
           </div>
 

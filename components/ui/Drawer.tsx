@@ -47,7 +47,7 @@ export const Drawer: React.FC<DrawerProps> = ({
       <div className={cn('fixed inset-y-0 flex max-w-full', position === 'right' ? 'right-0' : 'left-0')}>
         <div className="w-screen max-w-md bg-white border-l border-slate-200/80 shadow-2xl flex flex-col z-10 animate-slideLeft">
           {/* Header */}
-          <div className="px-6 py-4 border-b border-slate-100 flex items-start justify-between gap-4">
+          <div className="px-6 py-4 border-b border-slate-100 flex items-start justify-between gap-4 safe-pt">
             <div>
               {title && <h3 className="text-sm font-semibold text-slate-900">{title}</h3>}
               {subText && <p className="text-xs text-slate-500 mt-0.5">{subText}</p>}
@@ -62,7 +62,7 @@ export const Drawer: React.FC<DrawerProps> = ({
           </div>
 
           {/* Content */}
-          <div className="flex-1 px-6 py-5 overflow-y-auto">{children}</div>
+          <div className="flex-1 px-6 py-5 overflow-y-auto safe-pb">{children}</div>
         </div>
       </div>
     </div>

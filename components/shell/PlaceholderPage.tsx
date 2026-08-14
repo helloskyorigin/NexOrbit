@@ -79,6 +79,13 @@ export const PAGE_CONFIG: Record<string, PageMeta> = {
     icon: <SettingsIcon className="h-5 w-5 text-indigo-600" />,
     badgeText: 'Workspace Config',
   },
+  support: {
+    id: 'support',
+    title: 'Support',
+    subtitle: 'Help and support resources will appear here.',
+    icon: <Sparkles className="h-5 w-5 text-indigo-600" />,
+    badgeText: 'Help Center',
+  },
 };
 
 export interface PlaceholderPageProps {

@@ -14,6 +14,11 @@ import {
   X,
   Brain,
   Menu,
+  Mic,
+  Paperclip,
+  Globe,
+  AlertCircle,
+  Clock,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { ConnectorId } from '../shell/ConnectorModal';
@@ -34,43 +39,18 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
 }) => {
   const { addToast } = useToast();
   const [commandText, setCommandText] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [aiResponse, setAiResponse] = useState<{
-    prompt: string;
-    text: string;
-    sources: string[];
-    timestamp: string;
-  } | null>(null);
 
   const handleCommandSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!commandText.trim()) return;
 
-    setIsGenerating(true);
-    setAiResponse(null);
-
-    setTimeout(() => {
-      setIsGenerating(false);
-      setAiResponse({
-        prompt: commandText,
-        text: `Based on your connected Gmail, Calendar, and Notion memory, here is the synthesis for "${commandText}":
-
-• Project Alpha deadline is Friday 5:00 PM in Gmail, but your Calendar shows a 4:30 PM conflict.
-• Rahul replied to your security spec thread with approval notes.
-• 3 priority tasks require your attention before the 10:00 AM sync.`,
-        sources: [
-          'Gmail: "Project Alpha Spec Update"',
-          'Calendar: "Project Alpha Sync"',
-          'Drive: "Proposal_v2.pdf"',
-        ],
-        timestamp: 'Just now',
-      });
-      addToast({
-        type: 'info',
-        title: 'NEXORBIT AI Response',
-        description: 'Synthesized personal context from connected sources.',
-      });
-    }, 700);
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('pending_ask_command', commandText);
+    }
+    
+    if (onNavigate) {
+      onNavigate('ask-my-world');
+    }
   };
 
   const handleNotificationClick = () => {
@@ -86,12 +66,36 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
       {/* 1. COSMIC AMBIENT ORBITAL BACKGROUND (SVG + CSS) */}
       <div className="absolute inset-0 pointer-events-none -z-10 overflow-hidden">
         {/* Soft Radial Center Glow */}
-        <div className="absolute top-[38%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] rounded-full bg-gradient-to-br from-indigo-100/40 via-purple-50/25 to-transparent blur-3xl" />
+        <div className="absolute top-[20%] md:top-[38%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] md:w-[700px] h-[300px] md:h-[500px] rounded-full bg-gradient-to-br from-indigo-100/40 via-purple-50/25 to-transparent blur-3xl" />
 
-        {/* Ambient Orbital SVG Curves */}
+        {/* Mobile Ambient Orbital SVG Curves */}
+        <svg
+          viewBox="0 0 400 800"
+          className="block md:hidden absolute inset-0 w-full h-full object-cover opacity-40"
+          preserveAspectRatio="none"
+        >
+          <defs>
+            <linearGradient id="mobOrbit1" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#818cf8" stopOpacity="0.05" />
+              <stop offset="50%" stopColor="#6366f1" stopOpacity="0.25" />
+              <stop offset="100%" stopColor="#818cf8" stopOpacity="0.02" />
+            </linearGradient>
+          </defs>
+          <path
+            d="M -50 150 C 150 20, 300 80, 450 250"
+            fill="none"
+            stroke="url(#mobOrbit1)"
+            strokeWidth="1"
+            strokeDasharray="3 3"
+          />
+          <circle cx="180" cy="110" r="2.5" fill="#818cf8" filter="drop-shadow(0 0 4px #6366f1)" />
+          <circle cx="320" cy="190" r="2" fill="#c084fc" />
+        </svg>
+
+        {/* Desktop Ambient Orbital SVG Curves */}
         <svg
           viewBox="0 0 1400 900"
-          className="absolute inset-0 w-full h-full object-cover opacity-65"
+          className="hidden md:block absolute inset-0 w-full h-full object-cover opacity-65"
           preserveAspectRatio="none"
         >
           <defs>
@@ -180,7 +184,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
                 <Menu className="h-5 w-5" />
               </button>
             )}
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-950 flex items-center gap-1.5">
+            <h1 className="text-[26px] sm:text-3xl font-bold tracking-tight text-slate-950 flex items-center gap-1.5">
               <span>Good morning, {userName}</span>
               <span className="text-indigo-600 font-normal inline-block text-xl sm:text-2xl animate-pulse">
                 ✦
@@ -229,87 +233,72 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
       </div>
 
       {/* 3. HERO COMMAND SURFACE (SIGNATURE ANIMATED BORDER) */}
-      <div className="w-full max-w-2xl mx-auto my-6 sm:my-8 px-1">
-        <form onSubmit={handleCommandSubmit} className="relative group">
+      <div className="w-full max-w-2xl mx-auto mt-6 mb-4 sm:my-8 px-1">
+        <form onSubmit={handleCommandSubmit} className="relative group flex flex-col">
           {/* Glowing Animated Gradient Perimeter */}
-          <div className="absolute -inset-[1.5px] rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500 opacity-60 group-hover:opacity-100 group-focus-within:opacity-100 blur-[2px] transition-all duration-500 animate-gradient-x" />
+          <div className="absolute -inset-[1.5px] rounded-[1.75rem] bg-gradient-to-r from-indigo-300 via-purple-300 to-indigo-300 sm:from-indigo-500 sm:via-purple-500 sm:to-indigo-500 opacity-50 sm:opacity-60 group-hover:opacity-100 group-focus-within:opacity-100 blur-[2px] transition-all duration-500 animate-gradient-x" />
 
           {/* Command Pill Surface */}
-          <div className="relative flex items-center justify-between rounded-full bg-white/95 backdrop-blur-md px-5 sm:px-6 py-2.5 sm:py-3 shadow-[0_8px_30px_rgba(99,102,241,0.08)] border border-indigo-100/90 gap-3">
+          <div className="relative flex flex-col rounded-[1.75rem] bg-white/95 backdrop-blur-md p-3 sm:p-4 shadow-[0_8px_30px_rgba(99,102,241,0.08)] border border-indigo-100/90 gap-3">
             <input
               type="text"
               value={commandText}
               onChange={(e) => setCommandText(e.target.value)}
-              placeholder="Ask anything. NEXORBIT will handle the rest."
-              className="w-full bg-transparent text-slate-900 placeholder:text-slate-400 text-sm sm:text-[15px] focus:outline-none pr-2 font-normal"
+              placeholder="What can NEXORBIT help you with?"
+              className="w-full bg-transparent text-slate-900 placeholder:text-slate-400 text-[15px] sm:text-base focus:outline-none px-2 pt-1 font-normal"
             />
+            
+            <div className="flex items-center justify-between px-1">
+              <div className="flex items-center gap-1 sm:gap-2">
+                <button type="button" className="p-2 rounded-full text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors">
+                  <Paperclip className="h-4 w-4" />
+                </button>
+                <button type="button" className="p-2 rounded-full text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors">
+                  <Mic className="h-4 w-4" />
+                </button>
+                <button type="button" className="p-2 rounded-full text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors hidden sm:flex">
+                  <Globe className="h-4 w-4" />
+                </button>
+              </div>
 
-            {/* Circular Send Action Button */}
-            <button
-              type="submit"
-              disabled={isGenerating}
-              className="h-10 w-10 sm:h-11 sm:w-11 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center shadow-md active:scale-95 transition-all shrink-0 cursor-pointer disabled:opacity-50"
-              aria-label="Send command"
-            >
-              <ArrowRight className="h-5 w-5" />
-            </button>
+              {/* Circular Send Action Button */}
+              <button
+                type="submit"
+                className="h-10 w-10 sm:h-11 sm:w-11 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center shadow-md active:scale-95 transition-all shrink-0 cursor-pointer disabled:opacity-50"
+                aria-label="Send command"
+              >
+                <ArrowRight className="h-5 w-5" />
+              </button>
+            </div>
           </div>
         </form>
 
-        {/* Real-time AI Generation Loading */}
-        {isGenerating && (
-          <div className="mt-3 p-3.5 rounded-2xl border border-indigo-100 bg-white/90 backdrop-blur-sm shadow-xs flex items-center gap-3 animate-pulse">
-            <Brain className="h-4 w-4 text-indigo-600 animate-bounce" />
-            <span className="text-xs font-semibold text-slate-800">
-              NEXORBIT is synthesizing personal context across your apps...
-            </span>
+        {/* QUICK SUGGESTIONS */}
+        <div className="relative -mx-4 sm:mx-0">
+          <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-slate-50 to-transparent pointer-events-none z-10 block sm:hidden" />
+          <div className="flex overflow-x-auto scrollbar-hide pb-2 pt-3 px-5 sm:px-1 gap-2 snap-x snap-mandatory">
+            {[
+              'What changed since yesterday?',
+              'Do I have any deadline conflicts?',
+              'What should I focus on today?'
+            ].map((suggestion, i) => (
+              <button
+                key={i}
+                onClick={() => setCommandText(suggestion)}
+                className="snap-start shrink-0 bg-white/70 hover:bg-white border border-slate-200/80 text-slate-600 text-[13px] px-3.5 py-2 rounded-xl shadow-3xs hover:shadow-sm transition-all whitespace-nowrap"
+              >
+                {suggestion}
+              </button>
+            ))}
           </div>
-        )}
-
-        {/* AI Synthesis Result Panel */}
-        {aiResponse && !isGenerating && (
-          <div className="mt-3 p-4 rounded-3xl border border-indigo-100 bg-white shadow-sm space-y-3 relative animate-fadeIn">
-            <button
-              onClick={() => setAiResponse(null)}
-              className="absolute top-3.5 right-3.5 text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition-colors"
-            >
-              <X className="h-4 w-4" />
-            </button>
-
-            <div className="flex items-center gap-2">
-              <div className="h-6 w-6 rounded-lg bg-indigo-600 text-white flex items-center justify-center">
-                <Sparkles className="h-3.5 w-3.5" />
-              </div>
-              <div>
-                <h4 className="text-xs font-bold text-slate-950">NEXORBIT Personal AI Synthesis</h4>
-                <p className="text-[10px] text-slate-400">{aiResponse.timestamp}</p>
-              </div>
-            </div>
-
-            <div className="text-xs text-slate-700 whitespace-pre-line leading-relaxed font-sans bg-slate-50/80 p-3 rounded-2xl border border-slate-100">
-              {aiResponse.text}
-            </div>
-
-            <div className="flex flex-wrap gap-2 pt-0.5">
-              {aiResponse.sources.map((src, i) => (
-                <span
-                  key={i}
-                  className="text-[10px] font-medium bg-indigo-50/80 text-indigo-800 px-2.5 py-0.5 rounded-md border border-indigo-100 flex items-center gap-1"
-                >
-                  <CheckCircle2 className="h-3 w-3 text-indigo-600" />
-                  {src}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
+        </div>
       </div>
 
       {/* 4. CENTRAL ORBITAL CORE ("NEXORBIT BRAIN") */}
-      <div className="flex flex-col items-center justify-center my-2 sm:my-4 relative">
-        <div className="relative w-64 h-40 sm:h-44 flex items-center justify-center">
-          {/* 3D Tilted Perspective Ellipse Orbit Rings */}
-          <svg viewBox="0 0 320 200" className="absolute inset-0 w-full h-full pointer-events-none">
+      <div className="hidden sm:flex flex-col items-center justify-center my-4 sm:my-8 relative">
+        <div className="relative w-full max-w-[260px] h-24 sm:h-44 flex items-center justify-center">
+          {/* 3D Tilted Perspective Ellipse Orbit Rings (Desktop) */}
+          <svg viewBox="0 0 320 200" className="absolute inset-0 w-full h-full pointer-events-none hidden sm:block">
             <defs>
               <linearGradient id="coreRingGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stopColor="#c084fc" stopOpacity="0.2" />
@@ -369,12 +358,12 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
           </svg>
 
           {/* Central Glowing Celestial Core Sphere */}
-          <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full flex items-center justify-center group cursor-pointer">
+          <div className="relative w-16 h-16 sm:w-28 sm:h-28 rounded-full flex items-center justify-center group cursor-pointer">
             {/* Outer Diffuse Halo Aura */}
             <div className="absolute inset-0 rounded-full bg-indigo-500/25 blur-xl group-hover:bg-indigo-500/40 transition-all duration-500 animate-pulse" />
 
             {/* Inner Shaded Celestial Orb */}
-            <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-indigo-300 via-indigo-500 to-purple-700 shadow-[0_0_35px_rgba(99,102,241,0.45)] border border-indigo-200/50 flex items-center justify-center overflow-hidden">
+            <div className="relative w-12 h-12 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-indigo-300 via-indigo-500 to-purple-700 shadow-[0_0_20px_rgba(99,102,241,0.3)] sm:shadow-[0_0_35px_rgba(99,102,241,0.45)] border border-indigo-200/50 flex items-center justify-center overflow-hidden">
               {/* Highlight Glint */}
               <div className="absolute top-2 left-3 w-7 h-4 rounded-full bg-white/40 blur-[1px] transform -rotate-45" />
 
@@ -388,21 +377,69 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
           </div>
         </div>
 
-        {/* Status Below the Core */}
-        <div className="text-center space-y-0.5 -mt-2">
-          <div className="flex items-center justify-center gap-1.5 text-[13px] font-bold text-slate-900 tracking-tight">
-            <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
-            <span>NEXORBIT is up to date</span>
-          </div>
-          <p className="text-xs text-slate-400 font-normal">
-            Your digital world is in sync
-          </p>
-        </div>
       </div>
 
-      {/* 5. THREE LOWER CONTENT CARDS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-6 sm:mt-8 px-1">
-        {/* CARD 1: WHAT CHANGED */}
+      {/* COMPACT STATUS STRIP */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 my-6 px-1">
+        {[
+          { label: 'Need attention', count: 2, icon: AlertCircle, color: 'text-rose-600', bg: 'bg-rose-50', border: 'border-rose-100' },
+          { label: 'Changed', count: 3, icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100' },
+          { label: 'Upcoming', count: 2, icon: Calendar, color: 'text-sky-600', bg: 'bg-sky-50', border: 'border-sky-100' },
+          { label: 'Completed', count: 6, icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100' }
+        ].map((stat, i) => (
+          <div key={i} className={`flex items-center gap-3 p-3 rounded-2xl border ${stat.border} bg-white shadow-3xs`}>
+            <div className={`h-8 w-8 rounded-xl ${stat.bg} ${stat.color} flex items-center justify-center shrink-0`}>
+              <stat.icon className="h-4 w-4" />
+            </div>
+            <div>
+              <div className="text-base font-extrabold text-slate-900 leading-none">{stat.count}</div>
+              <div className="text-[11px] font-medium text-slate-500 mt-0.5 leading-none">{stat.label}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* 5. MAIN CONTENT REGION */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 mt-2 sm:mt-8 px-1">
+        
+        {/* TODAY'S FOCUS */}
+        <div className="lg:col-span-8 bg-white rounded-3xl p-5 border border-slate-100/90 shadow-[0_4px_24px_rgba(0,0,0,0.02)] hover:border-indigo-100 hover:shadow-md transition-all duration-200 flex flex-col justify-between space-y-4">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-[17px] text-slate-950 tracking-tight flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-indigo-600" />
+                Today&apos;s Focus
+              </h3>
+            </div>
+            
+            <div className="space-y-3">
+              {[
+                { title: 'Deadline conflict detected', desc: 'Friday 5PM vs Monday 9AM', action: 'Review', icon: AlertCircle, color: 'text-rose-600', bg: 'bg-rose-50' },
+                { title: 'Client hasn\'t replied', desc: 'Rahul — 4 days pending', action: 'Open', icon: Mail, color: 'text-amber-600', bg: 'bg-amber-50' },
+                { title: 'Meeting tomorrow', desc: '10:00 AM — Project Alpha', action: 'Prepare', icon: Calendar, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+              ].map((focus, i) => (
+                <div key={i} className="flex items-center justify-between gap-3 p-3 rounded-2xl border border-slate-100 hover:bg-slate-50 transition-colors cursor-pointer group">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className={`h-10 w-10 rounded-xl ${focus.bg} ${focus.color} flex items-center justify-center shrink-0`}>
+                      <focus.icon className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-sm font-bold text-slate-900 truncate whitespace-normal sm:truncate sm:whitespace-nowrap">{focus.title}</div>
+                      <div className="text-xs text-slate-500 truncate whitespace-normal sm:truncate sm:whitespace-nowrap">{focus.desc}</div>
+                    </div>
+                  </div>
+                  <button className="shrink-0 text-xs font-semibold text-slate-700 bg-white border border-slate-200 shadow-3xs px-3 py-1.5 rounded-lg group-hover:border-slate-300 transition-colors flex items-center gap-1">
+                    {focus.action} <ChevronRight className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        
+        {/* RIGHT COLUMN WRAPPER */}
+        <div className="lg:col-span-4 flex flex-col gap-5">
+          {/* CARD 1: WHAT CHANGED */}
         <div className="bg-white rounded-3xl p-5 border border-slate-100/90 shadow-[0_4px_24px_rgba(0,0,0,0.02)] hover:border-indigo-100 hover:shadow-md transition-all duration-200 flex flex-col justify-between space-y-4">
           <div className="space-y-3.5">
             {/* Card Header */}
@@ -489,65 +526,25 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
         </div>
 
         {/* CARD 2: CLEAN MY DAY */}
-        <div className="bg-white rounded-3xl p-5 border border-slate-100/90 shadow-[0_4px_24px_rgba(0,0,0,0.02)] hover:border-indigo-100 hover:shadow-md transition-all duration-200 flex flex-col justify-between space-y-4">
-          <div className="space-y-3.5">
-            {/* Card Header */}
-            <div className="flex items-center justify-between">
-              <h3 className="font-bold text-[15px] text-slate-950 tracking-tight">
-                Clean My Day
-              </h3>
-              <button
-                onClick={() => onNavigate('clean-my-day')}
-                className="h-7 w-7 rounded-full text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 flex items-center justify-center transition-colors cursor-pointer"
-                aria-label="Go to Clean My Day"
-              >
-                <ArrowRight className="h-4 w-4" />
-              </button>
-            </div>
-
-            {/* Subtitle and Dominant Headline */}
-            <div className="space-y-0.5">
-              <div className="text-xs text-slate-500 font-normal">
-                You have 11 things today
-              </div>
-              <div className="text-base sm:text-[17px] font-extrabold text-slate-950 tracking-tight leading-tight">
-                Only 3 need your attention
-              </div>
-            </div>
-
-            {/* Segmented Priority Indicator */}
-            <div className="grid grid-cols-3 gap-2 pt-1">
-              <div className="flex flex-col items-center">
-                <div className="w-full bg-indigo-500 text-white font-bold text-xs py-2 rounded-2xl text-center shadow-xs">
-                  3
-                </div>
-                <span className="text-[11px] text-slate-500 font-medium mt-1">Important</span>
-              </div>
-
-              <div className="flex flex-col items-center">
-                <div className="w-full bg-slate-100 text-slate-700 font-semibold text-xs py-2 rounded-2xl text-center">
-                  5
-                </div>
-                <span className="text-[11px] text-slate-500 font-medium mt-1">Later</span>
-              </div>
-
-              <div className="flex flex-col items-center">
-                <div className="w-full bg-slate-100 text-slate-700 font-semibold text-xs py-2 rounded-2xl text-center">
-                  3
-                </div>
-                <span className="text-[11px] text-slate-500 font-medium mt-1">Ignore</span>
-              </div>
-            </div>
+        <div className="relative bg-gradient-to-br from-indigo-50/80 via-white to-purple-50/30 rounded-3xl p-5 border border-indigo-100/60 shadow-[0_4px_24px_rgba(99,102,241,0.04)] hover:shadow-md transition-all duration-200 flex flex-col justify-between space-y-5 overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-400/10 blur-2xl rounded-full -mr-10 -mt-10" />
+          
+          <div className="space-y-1.5 relative z-10">
+            <h3 className="font-bold text-[17px] text-slate-950 tracking-tight">
+              Need a clearer day?
+            </h3>
+            <p className="text-xs text-slate-500 font-normal">
+              Let NEXORBIT decide what matters.
+            </p>
           </div>
 
-          {/* Full-width Button */}
-          <div className="pt-2">
+          <div className="pt-2 relative z-10">
             <button
               onClick={() => onNavigate('clean-my-day')}
-              className="w-full bg-indigo-50/80 hover:bg-indigo-100/90 text-indigo-600 font-semibold text-xs py-2.5 px-4 rounded-2xl flex items-center justify-between transition-all duration-150 cursor-pointer border border-indigo-100/60"
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-[13px] py-3 px-4 rounded-2xl flex items-center justify-center gap-2 transition-all duration-150 cursor-pointer shadow-md shadow-indigo-600/20 active:scale-[0.98]"
             >
-              <span>See your day</span>
-              <ChevronRight className="h-4 w-4" />
+              <Sparkles className="h-4 w-4" />
+              <span>Clean My Day</span>
             </button>
           </div>
         </div>
@@ -631,6 +628,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
               <ChevronRight className="h-3.5 w-3.5" />
             </button>
           </div>
+        </div>
         </div>
       </div>
 

@@ -165,6 +165,22 @@ export const AskMyWorldView: React.FC<AskMyWorldViewProps> = ({
     }, 600);
   };
 
+  // Handle pending command from Home
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const pendingCommand = sessionStorage.getItem('pending_ask_command');
+      if (pendingCommand) {
+        sessionStorage.removeItem('pending_ask_command');
+        // Let state initialize, then send
+        setTimeout(() => {
+          setActiveConversationId(null);
+          handleSendPrompt(pendingCommand);
+        }, 100);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Handle Finding Action Clicks
   const handleFindingAction = (finding: FindingItem) => {
     switch (finding.actionType) {
