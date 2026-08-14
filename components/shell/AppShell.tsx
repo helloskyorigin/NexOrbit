@@ -15,9 +15,8 @@ import { WhatChangedView } from '../changes/WhatChangedView';
 import { CleanMyDayView } from '../focus/CleanMyDayView';
 import { SettingsView } from '../settings/SettingsView';
 import { Drawer } from '../ui/Drawer';
-import { Terminal, Palette, Sparkles } from 'lucide-react';
+import { Terminal, Palette } from 'lucide-react';
 import { Badge } from '../ui/Badge';
-import { Button } from '../ui/Button';
 import { cn } from '../../lib/utils';
 
 export interface AppShellProps {
@@ -55,8 +54,18 @@ export const AppShell: React.FC<AppShellProps> = ({
 
   const currentPageMeta = PAGE_CONFIG[activePage] || PAGE_CONFIG['home'];
 
+  const hasCustomHeader =
+    activePage === 'home' ||
+    activePage === 'ask' ||
+    activePage === 'ask-my-world' ||
+    activePage === 'what-changed' ||
+    activePage === 'clean-my-day' ||
+    activePage === 'goals' ||
+    activePage === 'memory' ||
+    activePage === 'settings';
+
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans antialiased">
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans antialiased transition-colors duration-200">
       <div className="flex flex-1 w-full relative">
         {/* Persistent Fixed Left Sidebar for Desktop (lg+) */}
         <Sidebar
@@ -68,8 +77,8 @@ export const AppShell: React.FC<AppShellProps> = ({
 
         {/* Main Workspace Column */}
         <div className="flex-1 flex flex-col min-w-0 pb-16 lg:pb-8">
-          {/* Reusable Top Header Bar (Shown on subpages that do not have custom header systems) */}
-          {activePage !== 'home' && activePage !== 'ask' && activePage !== 'ask-my-world' && activePage !== 'what-changed' && activePage !== 'clean-my-day' && activePage !== 'goals' && activePage !== 'memory' && (
+          {/* Reusable Top Header Bar (Shown only on simple subpages without custom header systems) */}
+          {!hasCustomHeader && (
             <TopBar
               activePageTitle={currentPageMeta.title}
               activePageIcon={currentPageMeta.icon}
@@ -78,12 +87,12 @@ export const AppShell: React.FC<AppShellProps> = ({
             />
           )}
 
-          {/* Developer / Design System Quick Switcher Bar (Preserving Phase 0 & Tokens accessibility) */}
+          {/* Developer / Design System Quick Switcher Bar */}
           {showDevTabOption && (
             <div className="bg-slate-100/80 border-b border-slate-200/80 px-4 py-2 flex items-center justify-between text-xs">
               <div className="flex items-center gap-2">
                 <Badge variant="indigo" size="sm">
-                  Phase 1 App Shell
+                  NEXORBIT 2.0
                 </Badge>
                 <span className="text-[11px] text-slate-500 hidden sm:inline-block">
                   Navigating: <code className="font-mono text-indigo-700 font-semibold">/{activePage}</code>
@@ -94,10 +103,10 @@ export const AppShell: React.FC<AppShellProps> = ({
                 {activePage !== 'dev-showcase' && (
                   <button
                     onClick={() => handleSelectPage('dev-showcase')}
-                    className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 bg-white border border-indigo-200 px-2.5 py-1 rounded-lg transition-colors"
+                    className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 bg-white border border-indigo-200 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
                   >
                     <Palette className="h-3.5 w-3.5" />
-                    <span>View UI Tokens &amp; Backend Verification</span>
+                    <span>View UI Tokens</span>
                   </button>
                 )}
               </div>
@@ -107,7 +116,7 @@ export const AppShell: React.FC<AppShellProps> = ({
           {/* Main Content Area Container */}
           <main className={cn(
             "flex-1 w-full mx-auto px-4 sm:px-6 py-2 sm:py-4",
-            activePage === 'home' ? "max-w-5xl" : activePage === 'ask' || activePage === 'ask-my-world' || activePage === 'what-changed' || activePage === 'clean-my-day' || activePage === 'goals' || activePage === 'memory' ? "max-w-7xl" : "max-w-6xl"
+            activePage === 'home' ? "max-w-5xl" : activePage === 'settings' ? "max-w-7xl" : activePage === 'ask' || activePage === 'ask-my-world' || activePage === 'what-changed' || activePage === 'clean-my-day' || activePage === 'goals' || activePage === 'memory' ? "max-w-7xl" : "max-w-6xl"
           )}>
             {children ? (
               children
@@ -169,7 +178,7 @@ export const AppShell: React.FC<AppShellProps> = ({
               setIsMobileDrawerOpen(false);
               setActiveConnectorId(id);
             }}
-            className="w-full border-none shadow-none h-auto"
+            className="w-full border-none shadow-none h-auto m-0 ml-0 p-2"
           />
         </div>
       </Drawer>

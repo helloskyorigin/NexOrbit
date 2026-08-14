@@ -52,7 +52,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <aside
       className={cn(
-        'w-[240px] bg-white rounded-3xl border border-slate-100/90 shadow-[0_8px_30px_rgba(0,0,0,0.02)] flex flex-col justify-between shrink-0 select-none p-4 my-4 ml-4 h-[calc(100vh-2rem)] sticky top-4 z-20',
+        'w-[240px] bg-white rounded-3xl border border-slate-100/90 shadow-[0_8px_30px_rgba(0,0,0,0.02)] flex flex-col justify-between shrink-0 select-none p-4 my-4 ml-4 h-[calc(100vh-2rem)] sticky top-4 z-20 transition-colors duration-200',
         className
       )}
     >
@@ -165,7 +165,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Workspace Profile Switcher Pill */}
         <div className="pt-2 border-t border-slate-100/80">
-          <div className="flex items-center justify-between p-2 rounded-2xl hover:bg-slate-50 transition-colors cursor-pointer group">
+          <div
+            onClick={() => onSelectPage('settings')}
+            className="flex items-center justify-between p-2 rounded-2xl hover:bg-slate-50 transition-colors cursor-pointer group"
+          >
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="h-7 w-7 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-bold shrink-0 shadow-2xs">
                 N
@@ -181,4 +184,3 @@ export const Sidebar: React.FC<SidebarProps> = ({
     </aside>
   );
 };
-
