@@ -19,29 +19,36 @@ import { Language, SUPPORTED_LANGUAGES } from '../translations';
 import { COUNTRIES, Country, getSensibleDetectedTimezone } from '../countries';
 import { validateNameInput } from '../authErrors';
 import { cn } from '../../../lib/utils';
+import { auth } from '../../../lib/firebase';
 
 export const ProfileSetupView: React.FC = () => {
-  const { user, completeProfileSetup, loading, authErrorInfo, clearError } = useAuth();
+  const { user, completeProfileSetup, loading, authErrorInfo, clearError, signOut } = useAuth();
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
 
   const [displayName, setDisplayName] = useState(() => {
-    if (user?.displayName && user.displayName !== 'User') {
-      return user.displayName;
-    }
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && user?.uid) {
+      // 1. Priority: Firestore profile displayName
       try {
-        const tempName = localStorage.getItem('nexorbit_temp_fullname');
-        if (tempName) return tempName;
+        const cachedProfileStr = localStorage.getItem(`nexorbit_profile_${user.uid}`);
+        if (cachedProfileStr) {
+          const cachedProfile = JSON.parse(cachedProfileStr);
+          if (cachedProfile?.displayName && cachedProfile.displayName !== 'User') {
+            return cachedProfile.displayName;
+          }
+        }
       } catch (e) {}
     }
-    if (user?.email) {
-      const emailPrefix = user.email.split('@')[0];
-      return emailPrefix
-        .replace(/[._-]/g, ' ')
-        .replace(/\b\w/g, (c) => c.toUpperCase());
+
+    // 2. Priority: Firebase Auth displayName
+    const firebaseUser = auth.currentUser;
+    if (firebaseUser?.displayName && firebaseUser.displayName !== 'User') {
+      return firebaseUser.displayName;
     }
+
+    // 3. Priority: Empty value
     return '';
   });
+
   const [nameError, setNameError] = useState<string | null>(null);
   const [selectedLanguage, setSelectedLanguage] = useState<Language>(() => user?.language || 'en');
   const [selectedCountry, setSelectedCountry] = useState<Country | null>(
@@ -121,6 +128,15 @@ export const ProfileSetupView: React.FC = () => {
     });
   };
 
+  if (!user) {
+    return (
+      <div className="flex flex-col items-center justify-center p-12 min-h-[300px]">
+        <Loader2 className="h-6 w-6 animate-spin text-indigo-600" />
+        <p className="text-xs text-slate-400 font-medium mt-3">Preparing setup...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 text-left animate-in fade-in zoom-in-95 duration-200">
       {/* Step Indicator Header */}
@@ -192,13 +208,20 @@ export const ProfileSetupView: React.FC = () => {
             )}
           </div>
 
-          <div className="pt-2">
+          <div className="pt-2 flex flex-col gap-2.5">
             <button
               type="submit"
               className="w-full h-[52px] px-5 rounded-[16px] bg-slate-950 hover:bg-slate-900 active:scale-[0.99] text-white font-medium text-[15px] shadow-[0_1px_2px_rgba(0,0,0,0.02)] transition-all duration-150 cursor-pointer flex items-center justify-center gap-2 group"
             >
               <span>Continue</span>
               <ArrowRight className="h-4 w-4 opacity-80 group-hover:translate-x-0.5 transition-transform" />
+            </button>
+            <button
+              type="button"
+              onClick={() => signOut()}
+              className="w-full h-[52px] px-5 rounded-[16px] border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-medium text-[15px] transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+            >
+              <span>Sign out / Back to Login</span>
             </button>
           </div>
         </form>

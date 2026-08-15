@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import {
   onAuthStateChanged,
   signInWithPopup,
@@ -53,13 +53,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
 
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isAuthenticated, setIsAuthenticatedState] = useState<boolean>(false);
+  const isAuthenticatedRef = useRef<boolean>(false);
+
+  const setIsAuthenticated = useCallback((val: boolean) => {
+    isAuthenticatedRef.current = val;
+    setIsAuthenticatedState(val);
+  }, []);
+
   const [authInitializing, setAuthInitializing] = useState<boolean>(true);
   const [authView, setAuthView] = useState<AuthView>('welcome');
   const [loading, setLoading] = useState<boolean>(false);
   const [oauthLoading, setOauthLoading] = useState<'google' | 'github' | null>(null);
   const [authErrorInfo, setAuthErrorInfo] = useState<AuthErrorInfo | null>(null);
   const [pendingEmail, setPendingEmail] = useState<string>('');
+  const isInitialMountRef = useRef<boolean>(true);
 
   const clearError = useCallback(() => {
     setAuthErrorInfo(null);
@@ -119,11 +127,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Listen to Firebase Auth state changes
   useEffect(() => {
-    let isInitialMount = true;
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         // If it's a new sign in flow (not just a page reload where we were already authenticated)
-        if (!isInitialMount && !isAuthenticated) {
+        if (!isInitialMountRef.current && !isAuthenticatedRef.current) {
           setAuthView('authenticating');
         }
 
@@ -180,9 +187,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               return prev;
             });
           } else {
-            // Direct new users to onboarding profile setup
-            setAuthView('profile-setup');
-            setIsAuthenticated(false);
+            if (isInitialMountRef.current) {
+              // Sign out on initial mount so they start clean at the login screen with all options
+              await firebaseSignOut(auth).catch(() => {});
+              setUser(null);
+              setIsAuthenticated(false);
+              setAuthView('welcome');
+            } else {
+              // Direct active flow users (who just signed up) to onboarding profile setup
+              setAuthView('profile-setup');
+              setIsAuthenticated(false);
+            }
           }
         } catch (error: any) {
           console.error("Error loading user profile:", error);
@@ -210,11 +225,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
       }
       setAuthInitializing(false);
-      isInitialMount = false;
+      isInitialMountRef.current = false;
     });
 
     return () => unsubscribe();
-  }, [isAuthenticated]);
+  }, []);
 
   // Handle OAuth provider with fallback
   const handleOAuthSignIn = async (providerName: 'google' | 'github', providerObj: any) => {

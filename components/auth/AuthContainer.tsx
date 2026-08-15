@@ -82,107 +82,129 @@ export const AuthContainer: React.FC<AuthContainerProps> = ({ className }) => {
             <NexOrbitLogo variant="full" size="md" />
           </div>
 
-          {/* Center Display Hero & Orbital Visual */}
-          <div className="relative my-auto py-12">
-            {/* Background Orbital Aesthetic Trail */}
-            <div className="absolute -top-16 -left-8 w-[520px] h-[440px] pointer-events-none opacity-80">
-              <svg viewBox="0 0 520 440" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-                {/* Outer gentle orbital curves */}
-                <path
-                  d="M 40 280 C 140 100, 360 40, 480 180 C 560 270, 360 400, 160 360 C 80 340, 30 300, 40 280 Z"
-                  stroke="url(#orbitGradient)"
-                  strokeWidth="1.25"
-                  strokeDasharray="4 4"
-                  className="opacity-40"
-                />
-                <ellipse
-                  cx="280"
-                  cy="210"
-                  rx="190"
-                  ry="95"
-                  transform="rotate(-22 280 210)"
-                  stroke="url(#orbitGradient2)"
-                  strokeWidth="1.5"
-                  className="opacity-60"
-                />
-                {/* Floating planetary spheres */}
-                <circle cx="165" cy="225" r="10" className="fill-indigo-600 shadow-md" />
-                <circle cx="162" cy="222" r="3" className="fill-white/30" />
-                
-                <circle cx="410" cy="130" r="4.5" className="fill-blue-500/80" />
-                <circle cx="105" cy="310" r="3.5" className="fill-slate-400" />
-
-                <defs>
-                  <linearGradient id="orbitGradient" x1="40" y1="100" x2="480" y2="380" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#6366F1" stopOpacity="0.4" />
-                    <stop offset="0.5" stopColor="#94A3B8" stopOpacity="0.2" />
-                    <stop offset="1" stopColor="#CBD5E1" stopOpacity="0.05" />
-                  </linearGradient>
-                  <linearGradient id="orbitGradient2" x1="120" y1="140" x2="440" y2="280" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#475569" stopOpacity="0.4" />
-                    <stop offset="0.7" stopColor="#818CF8" stopOpacity="0.3" />
-                    <stop offset="1" stopColor="#E2E8F0" stopOpacity="0.1" />
-                  </linearGradient>
-                </defs>
-              </svg>
-            </div>
-
-            <div className="relative z-10 space-y-4 max-w-lg">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-50 border border-indigo-100/50 text-indigo-600 text-xs font-medium mb-2">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 3l1.912 5.813a2 2 0 001.275 1.275L21 12l-5.813 1.912a2 2 0 00-1.275 1.275L12 21l-1.912-5.813a2 2 0 00-1.275-1.275L3 12l5.813-1.912a2 2 0 001.275-1.275L12 3z" className="fill-indigo-600 stroke-indigo-600" />
-                </svg>
-                Welcome to NexOrbit
+          {/* Center Content Panel with Vertical Hierarchy */}
+          <div className="my-auto py-8 flex flex-col gap-8">
+            
+            {/* 1. Brand Greeting & Typography (Eyebrow, Headline, Subtext) */}
+            <div className="space-y-4 max-w-lg">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-50/80 border border-indigo-100/50 text-indigo-600 text-xs font-semibold select-none w-fit">
+                <Zap className="h-3.5 w-3.5 text-indigo-500 fill-indigo-100" />
+                <span>Welcome to NexOrbit</span>
               </div>
-              <h1 className="text-5xl xl:text-[56px] font-bold text-slate-900 tracking-tight leading-[1.1]">
-                Your AI <br/>
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-blue-500">workspace</span> <br/>
-                for the future
+              <h1 className="text-4xl xl:text-5xl font-extrabold text-slate-900 tracking-tight leading-[1.15]">
+                Your AI workspace <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-blue-600">for the future.</span>
               </h1>
-              <p className="text-base text-slate-500 font-normal leading-relaxed max-w-md mt-4">
-                One secure place for all your work, <br/>AI agents, and integrations.
+              <p className="text-[15px] text-slate-500 font-normal leading-relaxed max-w-md">
+                One secure place for all your work, AI agents, and integrations.
               </p>
             </div>
 
-            {/* Value Proposition List */}
-            <div className="relative z-10 mt-14 space-y-6 max-w-md">
-              <div className="flex items-start gap-3.5">
-                <div className="h-8 w-8 rounded-lg bg-slate-100/80 border border-slate-200/60 flex items-center justify-center text-slate-700 shrink-0 mt-0.5">
-                  <Shield className="h-4 w-4 stroke-[2]" />
+            {/* 2. Dedicated Orbital Visual Zone (Ensures ZERO overlap with text) */}
+            <div className="relative w-full max-w-lg aspect-[1.85/1] bg-slate-50/50 border border-slate-100 rounded-2xl flex items-center justify-center overflow-hidden shadow-inner p-4">
+              {/* High-Precision Orbital SVG */}
+              <svg viewBox="0 0 480 240" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full max-h-[220px]">
+                {/* Defs for glow filters and rich gradients */}
+                <defs>
+                  <linearGradient id="orbGradientLeft" x1="40" y1="20" x2="440" y2="220" gradientUnits="userSpaceOnUse">
+                    <stop stopColor="#6366F1" stopOpacity="0.35" />
+                    <stop offset="0.5" stopColor="#3B82F6" stopOpacity="0.15" />
+                    <stop offset="1" stopColor="#94A3B8" stopOpacity="0.02" />
+                  </linearGradient>
+                  <linearGradient id="nucleusGrad" x1="220" y1="100" x2="260" y2="140" gradientUnits="userSpaceOnUse">
+                    <stop stopColor="#4F46E5" />
+                    <stop offset="1" stopColor="#2563EB" />
+                  </linearGradient>
+                  <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="6" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                  </filter>
+                </defs>
+
+                {/* Subtle outer orbit track */}
+                <ellipse cx="240" cy="120" rx="180" ry="76" stroke="url(#orbGradientLeft)" strokeWidth="1" strokeDasharray="3 5" className="opacity-60" />
+                
+                {/* Inner principal orbit track */}
+                <ellipse cx="240" cy="120" rx="110" ry="46" stroke="url(#orbGradientLeft)" strokeWidth="1.5" />
+
+                {/* Micro orbit track (inclined) */}
+                <ellipse cx="240" cy="120" rx="60" ry="25" transform="rotate(-15 240 120)" stroke="url(#orbGradientLeft)" strokeWidth="1" strokeDasharray="2 2" />
+
+                {/* Glowing Nucleus Core (NexOrbit Brain) */}
+                <circle cx="240" cy="120" r="14" fill="url(#nucleusGrad)" filter="url(#glow)" className="opacity-95" />
+                <circle cx="240" cy="120" r="6" fill="#FFFFFF" />
+
+                {/* Floating Intelligence Nodes */}
+                {/* Node 1: Connector (Google) on outer ring */}
+                <g className="translate-x-[60px] translate-y-[120px]">
+                  <circle cx="0" cy="0" r="8" fill="#FFFFFF" stroke="#6366F1" strokeWidth="1.5" filter="url(#glow)" />
+                  <circle cx="0" cy="0" r="3.5" fill="#6366F1" />
+                </g>
+
+                {/* Node 2: GitHub on inner ring */}
+                <g className="translate-x-[310px] translate-y-[86px]">
+                  <circle cx="0" cy="0" r="7" fill="#FFFFFF" stroke="#1E293B" strokeWidth="1.5" />
+                  <circle cx="0" cy="0" r="3" fill="#1E293B" />
+                </g>
+
+                {/* Node 3: AI Agent on inner ring */}
+                <g className="translate-x-[150px] translate-y-[145px]">
+                  <circle cx="0" cy="0" r="8" fill="#E0E7FF" stroke="#4F46E5" strokeWidth="2" />
+                  <polygon points="150,143 152,148 147,146" transform="translate(-149.5, -145.5)" fill="#4F46E5" />
+                </g>
+
+                {/* Node 4: Calendar Node on outer ring */}
+                <g className="translate-x-[400px] translate-y-[135px]">
+                  <circle cx="0" cy="0" r="6" fill="#FFFFFF" stroke="#3B82F6" strokeWidth="1" />
+                  <circle cx="0" cy="0" r="2.5" fill="#3B82F6" />
+                </g>
+
+                {/* Connective Linker Rays */}
+                <line x1="240" y1="120" x2="60" y2="120" stroke="#818CF8" strokeWidth="1" strokeDasharray="4 4" className="opacity-40" />
+                <line x1="240" y1="120" x2="310" y2="86" stroke="#475569" strokeWidth="1" strokeDasharray="2 2" className="opacity-40" />
+                <line x1="240" y1="120" x2="150" y2="145" stroke="#818CF8" strokeWidth="1" strokeDasharray="3 3" className="opacity-45" />
+              </svg>
+            </div>
+
+            {/* 3. Three Benefits (Icon + Title + Description) */}
+            <div className="grid grid-cols-1 gap-5 max-w-lg mt-2">
+              <div className="flex items-start gap-4">
+                <div className="h-9 w-9 rounded-xl bg-indigo-50 border border-indigo-100/60 flex items-center justify-center text-indigo-600 shrink-0 mt-0.5 shadow-sm">
+                  <Shield className="h-4.5 w-4.5 stroke-[2]" />
                 </div>
                 <div>
-                  <h3 className="text-xs font-semibold text-slate-900">
+                  <h3 className="text-sm font-semibold text-slate-900 leading-snug">
                     Enterprise-grade security
                   </h3>
-                  <p className="text-xs text-slate-500 font-normal mt-0.5">
+                  <p className="text-xs text-slate-500 font-normal mt-0.5 leading-relaxed">
                     Your data is encrypted and always protected.
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-start gap-3.5">
-                <div className="h-8 w-8 rounded-lg bg-slate-100/80 border border-slate-200/60 flex items-center justify-center text-slate-700 shrink-0 mt-0.5">
-                  <Zap className="h-4 w-4 stroke-[2]" />
+              <div className="flex items-start gap-4">
+                <div className="h-9 w-9 rounded-xl bg-emerald-50 border border-emerald-100/60 flex items-center justify-center text-emerald-600 shrink-0 mt-0.5 shadow-sm">
+                  <Zap className="h-4.5 w-4.5 stroke-[2]" />
                 </div>
                 <div>
-                  <h3 className="text-xs font-semibold text-slate-900">
+                  <h3 className="text-sm font-semibold text-slate-900 leading-snug">
                     Seamless &amp; fast
                   </h3>
-                  <p className="text-xs text-slate-500 font-normal mt-0.5">
-                    Built for speed, simplicity and productivity.
+                  <p className="text-xs text-slate-500 font-normal mt-0.5 leading-relaxed">
+                    Built for speed, simplicity, and productivity.
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-start gap-3.5">
-                <div className="h-8 w-8 rounded-lg bg-slate-100/80 border border-slate-200/60 flex items-center justify-center text-slate-700 shrink-0 mt-0.5">
-                  <Lock className="h-4 w-4 stroke-[2]" />
+              <div className="flex items-start gap-4">
+                <div className="h-9 w-9 rounded-xl bg-blue-50 border border-blue-100/60 flex items-center justify-center text-blue-600 shrink-0 mt-0.5 shadow-sm">
+                  <Lock className="h-4.5 w-4.5 stroke-[2]" />
                 </div>
                 <div>
-                  <h3 className="text-xs font-semibold text-slate-900">
+                  <h3 className="text-sm font-semibold text-slate-900 leading-snug">
                     Privacy first
                   </h3>
-                  <p className="text-xs text-slate-500 font-normal mt-0.5">
+                  <p className="text-xs text-slate-500 font-normal mt-0.5 leading-relaxed">
                     You own your data. We respect that.
                   </p>
                 </div>
