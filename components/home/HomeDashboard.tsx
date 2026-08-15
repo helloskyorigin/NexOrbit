@@ -234,7 +234,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
 
       {/* 3. HERO COMMAND SURFACE (SIGNATURE ANIMATED BORDER) */}
       <div className="w-full max-w-2xl mx-auto mt-6 mb-4 sm:my-8 px-1">
-        <form onSubmit={handleCommandSubmit} className="relative group flex flex-col">
+        <form onSubmit={handleFormSubmit} className="relative group flex flex-col">
           {/* Glowing Animated Gradient Perimeter */}
           <div className="absolute -inset-[1.5px] rounded-[1.75rem] bg-gradient-to-r from-indigo-300 via-purple-300 to-indigo-300 sm:from-indigo-500 sm:via-purple-500 sm:to-indigo-500 opacity-50 sm:opacity-60 group-hover:opacity-100 group-focus-within:opacity-100 blur-[2px] transition-all duration-500 animate-gradient-x" />
 
