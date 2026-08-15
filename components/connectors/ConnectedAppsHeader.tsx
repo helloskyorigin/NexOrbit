@@ -1,34 +1,37 @@
 'use client';
 
 import React from 'react';
-import { Link2, ShieldCheck } from 'lucide-react';
-import { SectionHeader } from '../ui/SectionHeader';
-import { Badge } from '../ui/Badge';
+import { Plus } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 export interface ConnectedAppsHeaderProps {
   className?: string;
+  onConnectNewApp?: () => void;
 }
 
-export const ConnectedAppsHeader: React.FC<ConnectedAppsHeaderProps> = ({ className }) => {
+export const ConnectedAppsHeader: React.FC<ConnectedAppsHeaderProps> = ({
+  className,
+  onConnectNewApp,
+}) => {
   return (
     <div className={cn('flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200/80', className)}>
-      <SectionHeader
-        title="Connected apps"
-        subtitle="Connect the tools where your important information lives."
-        badge={
-          <Badge variant="indigo" size="sm" className="bg-indigo-50 text-indigo-700 border-indigo-100">
-            <Link2 className="h-3 w-3 mr-1 text-indigo-600 inline" />
-            Workspace Context
-          </Badge>
-        }
-      />
-
-      {/* Subtle privacy message */}
-      <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium bg-slate-50 border border-slate-200/80 px-3 py-1.5 rounded-xl shrink-0 self-start sm:self-auto">
-        <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-        <span>You&apos;re always in control of what NEXORBIT can access.</span>
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 font-sans">
+          Connected Apps
+        </h1>
+        <p className="text-xs text-slate-500 font-medium mt-1">
+          Connect the tools you use so NexOrbit can understand your world.
+        </p>
       </div>
+
+      <button
+        onClick={onConnectNewApp}
+        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold text-xs transition-colors shadow-2xs cursor-pointer shrink-0 self-start sm:self-center"
+      >
+        <Plus className="h-3.5 w-3.5" />
+        <span>Connect New App</span>
+      </button>
     </div>
   );
 };
+

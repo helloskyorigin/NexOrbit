@@ -3,19 +3,20 @@
 import React, { useState, useEffect } from 'react';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
-import { MobileNav } from './MobileNav';
+import { SlideMenu } from './SlideMenu';
 import { ConnectorModal, ConnectorId } from './ConnectorModal';
 import { PlaceholderPage, PAGE_CONFIG } from './PlaceholderPage';
 import { HomeDashboard } from '../home/HomeDashboard';
-import { AskMyWorldView } from '../ask/AskMyWorldView';
-import { GoalsView } from '../goals/GoalsView';
+import { ChatView } from '../chat/ChatView';
 import { MemoryView } from '../memory/MemoryView';
 import { ConnectedAppsView } from '../connectors/ConnectedAppsView';
 import { WhatChangedView } from '../changes/WhatChangedView';
 import { CleanMyDayView } from '../focus/CleanMyDayView';
 import { SettingsView } from '../settings/SettingsView';
-import { Drawer } from '../ui/Drawer';
-import { Terminal, Palette } from 'lucide-react';
+import { useAuth } from '../auth/AuthContext';
+import { AuthContainer } from '../auth/AuthContainer';
+import { AuthLoading } from '../auth/AuthLoading';
+import { Palette } from 'lucide-react';
 import { Badge } from '../ui/Badge';
 import { cn } from '../../lib/utils';
 
@@ -30,6 +31,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   children,
   showDevTabOption = false,
 }) => {
+  const { isAuthenticated, authInitializing } = useAuth();
   const [activePage, setActivePage] = useState<string>(initialPage);
   const [activeConnectorId, setActiveConnectorId] = useState<ConnectorId | null>(null);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
@@ -37,18 +39,42 @@ export const AppShell: React.FC<AppShellProps> = ({
   useEffect(() => {
     if (typeof window !== 'undefined' && window.location.hash) {
       const hashPage = window.location.hash.replace('#', '');
-      if (PAGE_CONFIG[hashPage]) {
+      if (
+        hashPage === 'home' ||
+        hashPage === 'chat' ||
+        hashPage === 'ask' ||
+        hashPage === 'ask-my-world' ||
+        hashPage === 'what-changed' ||
+        hashPage === 'clean-my-day' ||
+        hashPage === 'memory' ||
+        hashPage === 'connected-apps' ||
+        hashPage === 'settings' ||
+        hashPage === 'support' ||
+        PAGE_CONFIG[hashPage]
+      ) {
         setTimeout(() => {
-          setActivePage(hashPage);
+          setActivePage(hashPage === 'ask' || hashPage === 'ask-my-world' ? 'chat' : hashPage);
         }, 0);
       }
     }
   }, []);
 
+  // Show a clean loading state while auth state is being initialized/determined
+  if (authInitializing) {
+    return <AuthLoading />;
+  }
+
+  // If user is not authenticated, render the Auth UI view
+  if (!isAuthenticated) {
+    return <AuthContainer />;
+  }
+
+
   const handleSelectPage = (pageId: string) => {
-    setActivePage(pageId);
+    const normalizedPage = pageId === 'ask' || pageId === 'ask-my-world' ? 'chat' : pageId;
+    setActivePage(normalizedPage);
     if (typeof window !== 'undefined') {
-      window.location.hash = pageId;
+      window.location.hash = normalizedPage;
     }
   };
 
@@ -56,13 +82,15 @@ export const AppShell: React.FC<AppShellProps> = ({
 
   const hasCustomHeader =
     activePage === 'home' ||
+    activePage === 'chat' ||
     activePage === 'ask' ||
     activePage === 'ask-my-world' ||
     activePage === 'what-changed' ||
     activePage === 'clean-my-day' ||
-    activePage === 'goals' ||
     activePage === 'memory' ||
-    activePage === 'settings';
+    activePage === 'settings' ||
+    activePage === 'connected-apps' ||
+    activePage === 'connectors';
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans antialiased transition-colors duration-200">
@@ -76,7 +104,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         />
 
         {/* Main Workspace Column */}
-        <div className="flex-1 flex flex-col min-w-0 pb-16 lg:pb-8">
+        <div className="flex-1 flex flex-col min-w-0 pb-6 lg:pb-8">
           {/* Reusable Top Header Bar (Shown only on simple subpages without custom header systems) */}
           {!hasCustomHeader && (
             <TopBar
@@ -92,7 +120,7 @@ export const AppShell: React.FC<AppShellProps> = ({
             <div className="bg-slate-100/80 border-b border-slate-200/80 px-4 py-2 flex items-center justify-between text-xs">
               <div className="flex items-center gap-2">
                 <Badge variant="indigo" size="sm">
-                  NEXORBIT 2.0
+                  NexOrbit 2.0
                 </Badge>
                 <span className="text-[11px] text-slate-500 hidden sm:inline-block">
                   Navigating: <code className="font-mono text-indigo-700 font-semibold">/{activePage}</code>
@@ -114,11 +142,21 @@ export const AppShell: React.FC<AppShellProps> = ({
           )}
 
           {/* Main Content Area Container */}
-          <main className={cn(
-            "flex-1 w-full mx-auto px-4 sm:px-6 py-2 sm:py-4",
-            hasCustomHeader && "safe-pt",
-            activePage === 'home' ? "max-w-5xl" : activePage === 'settings' ? "max-w-7xl" : activePage === 'ask' || activePage === 'ask-my-world' || activePage === 'what-changed' || activePage === 'clean-my-day' || activePage === 'goals' || activePage === 'memory' ? "max-w-7xl" : "max-w-6xl"
-          )}>
+          <main
+            className={cn(
+              'flex-1 w-full mx-auto px-4 sm:px-6 md:px-8 py-3 sm:py-5 overflow-x-hidden',
+              hasCustomHeader && 'safe-pt',
+              activePage === 'home'
+                ? 'max-w-7xl'
+                : activePage === 'chat' || activePage === 'ask' || activePage === 'ask-my-world'
+                ? 'max-w-7xl'
+                : activePage === 'settings'
+                ? 'max-w-7xl'
+                : activePage === 'what-changed' || activePage === 'clean-my-day' || activePage === 'memory'
+                ? 'max-w-7xl'
+                : 'max-w-6xl'
+            )}
+          >
             {children ? (
               children
             ) : activePage === 'home' ? (
@@ -127,17 +165,14 @@ export const AppShell: React.FC<AppShellProps> = ({
                 onOpenConnector={(id) => setActiveConnectorId(id)}
                 onOpenMobileMenu={() => setIsMobileDrawerOpen(true)}
               />
-            ) : activePage === 'ask' || activePage === 'ask-my-world' ? (
-              <AskMyWorldView
+            ) : activePage === 'chat' || activePage === 'ask' || activePage === 'ask-my-world' ? (
+              <ChatView
                 onNavigate={handleSelectPage}
-                onOpenConnector={(id) => setActiveConnectorId(id as ConnectorId)}
               />
             ) : activePage === 'what-changed' ? (
               <WhatChangedView onNavigate={handleSelectPage} />
             ) : activePage === 'clean-my-day' ? (
               <CleanMyDayView onNavigate={handleSelectPage} />
-            ) : activePage === 'goals' ? (
-              <GoalsView onNavigate={handleSelectPage} />
             ) : activePage === 'memory' ? (
               <MemoryView onNavigate={handleSelectPage} />
             ) : activePage === 'settings' ? (
@@ -154,35 +189,14 @@ export const AppShell: React.FC<AppShellProps> = ({
         </div>
       </div>
 
-      {/* Mobile Bottom Sticky Navigation (sm & md) */}
-      <MobileNav
+      {/* Top-Left Slide Menu (Mobile / Tablet) */}
+      <SlideMenu
+        isOpen={isMobileDrawerOpen}
+        onClose={() => setIsMobileDrawerOpen(false)}
         activePage={activePage}
         onSelectPage={handleSelectPage}
         onOpenConnector={(id) => setActiveConnectorId(id)}
       />
-
-      {/* Mobile Header Drawer Menu */}
-      <Drawer
-        isOpen={isMobileDrawerOpen}
-        onClose={() => setIsMobileDrawerOpen(false)}
-        title="NEXORBIT Navigation"
-        subtitle="App Shell Menu"
-      >
-        <div className="space-y-4">
-          <Sidebar
-            activePage={activePage}
-            onSelectPage={(pageId) => {
-              setIsMobileDrawerOpen(false);
-              handleSelectPage(pageId);
-            }}
-            onOpenConnector={(id) => {
-              setIsMobileDrawerOpen(false);
-              setActiveConnectorId(id);
-            }}
-            className="w-full border-none shadow-none h-auto m-0 ml-0 p-2"
-          />
-        </div>
-      </Drawer>
 
       {/* Connector Details Modal */}
       <ConnectorModal

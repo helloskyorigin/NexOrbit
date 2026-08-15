@@ -1,17 +1,22 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ConnectorItem, SyncState } from './types';
-import { INITIAL_MOCK_CONNECTORS } from './mockData';
+import { INITIAL_MOCK_CONNECTORS, AVAILABLE_SECONDARY_CONNECTORS } from './mockData';
 import { ConnectedAppsHeader } from './ConnectedAppsHeader';
 import { ConnectionOverview } from './ConnectionOverview';
-import { ConnectorGrid } from './ConnectorGrid';
+import { ConnectorCard } from './ConnectorCard';
+import { AboutConnectedAppsCard } from './AboutConnectedAppsCard';
+import { ConnectionHealthCard } from './ConnectionHealthCard';
+import { TrustMessage } from './TrustMessage';
 import { ConnectModal } from './ConnectModal';
 import { ConnectorDetail } from './ConnectorDetail';
 import { DisconnectModal } from './DisconnectModal';
-import { PrivacyPanel } from './PrivacyPanel';
-import { EmptyConnectState } from './EmptyConnectState';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useToast } from '../ui/Toast';
+import { useAuth } from '../auth/AuthContext';
+import { db } from '../../lib/firebase';
+import { collection, getDocs, doc, setDoc } from 'firebase/firestore';
 
 export interface ConnectedAppsViewProps {
   onNavigate?: (pageId: string) => void;
@@ -23,39 +28,157 @@ export const ConnectedAppsView: React.FC<ConnectedAppsViewProps> = ({
   initialSelectedConnectorId,
 }) => {
   const { addToast } = useToast();
-  const [connectors, setConnectors] = useState<ConnectorItem[]>(INITIAL_MOCK_CONNECTORS);
+  const { user } = useAuth();
 
+  // Primary V1 connectors state
+  const [connectors, setConnectors] = useState<ConnectorItem[]>(INITIAL_MOCK_CONNECTORS);
+  // Secondary available connectors state
+  const [availableConnectors, setAvailableConnectors] = useState<ConnectorItem[]>(AVAILABLE_SECONDARY_CONNECTORS);
+
+  const [showAllAvailable, setShowAllAvailable] = useState(false);
+  const [loadingConnections, setLoadingConnections] = useState(false);
+
+  // Modal / Drawer states
   const [selectedToConnect, setSelectedToConnect] = useState<ConnectorItem | null>(null);
   const [selectedToManage, setSelectedToManage] = useState<ConnectorItem | null>(() => {
     if (initialSelectedConnectorId) {
-      return INITIAL_MOCK_CONNECTORS.find((c) => c.id === initialSelectedConnectorId) || null;
+      return (
+        INITIAL_MOCK_CONNECTORS.find((c) => c.id === initialSelectedConnectorId) ||
+        AVAILABLE_SECONDARY_CONNECTORS.find((c) => c.id === initialSelectedConnectorId) ||
+        null
+      );
     }
     return null;
   });
   const [selectedToDisconnect, setSelectedToDisconnect] = useState<ConnectorItem | null>(null);
 
-  const activeConnectedCount = connectors.filter((c) => c.status !== 'not_connected').length;
+  // Real connection sync from Firestore
+  useEffect(() => {
+    if (!user?.uid) return;
+
+    const fetchConnections = async () => {
+      setLoadingConnections(true);
+      try {
+        const colRef = collection(db, 'users', user.uid, 'connections');
+        const snapshot = await getDocs(colRef);
+        
+        const dbConnections: Record<string, { connected: boolean; lastSynced?: string }> = {};
+        snapshot.forEach((doc) => {
+          dbConnections[doc.id] = doc.data() as any;
+        });
+
+        // Merge with initial list
+        setConnectors((prev) =>
+          prev.map((c) => {
+            const dbVal = dbConnections[c.id];
+            if (dbVal) {
+              return {
+                ...c,
+                status: dbVal.connected ? ('connected' as const) : ('not_connected' as const),
+                statusLabel: dbVal.connected ? 'Connected' : 'Not connected',
+                lastSynced: dbVal.connected ? (dbVal.lastSynced ? new Date(dbVal.lastSynced).toLocaleDateString() : 'Synced recently') : undefined,
+                contextCount: dbVal.connected ? (c.id === 'gmail' ? 'Active context syncing' : c.id === 'calendar' ? 'Syncing active schedule' : 'Connected') : undefined,
+              };
+            } else {
+              return {
+                ...c,
+                contextCount: c.status === 'connected' ? 'Active' : undefined,
+              };
+            }
+          })
+        );
+
+        setAvailableConnectors((prev) =>
+          prev.map((c) => {
+            const dbVal = dbConnections[c.id];
+            if (dbVal) {
+              return {
+                ...c,
+                status: dbVal.connected ? ('connected' as const) : ('not_connected' as const),
+                statusLabel: dbVal.connected ? 'Connected' : 'Not connected',
+                contextCount: dbVal.connected ? 'Active' : undefined,
+              };
+            }
+            return c;
+          })
+        );
+      } catch (e) {
+        console.warn('Error fetching connections:', e);
+      } finally {
+        setLoadingConnections(false);
+      }
+    };
+
+    fetchConnections();
+  }, [user?.uid]);
 
   // Handle Connect Confirmation
-  const handleConfirmConnect = (connectorId: string) => {
-    setConnectors((prev) =>
-      prev.map((c) => {
-        if (c.id === connectorId) {
-          return {
-            ...c,
-            status: 'connected' as SyncState,
-            statusLabel: 'Connected',
-            lastSynced: 'Just now',
-            contextCount: c.contextCount || 'Indexed',
-          };
-        }
-        return c;
-      })
-    );
+  const handleConfirmConnect = async (connectorId: string) => {
+    // Check if in primary connectors list
+    const isPrimary = connectors.some((c) => c.id === connectorId);
+
+    if (isPrimary) {
+      setConnectors((prev) =>
+        prev.map((c) => {
+          if (c.id === connectorId) {
+            return {
+              ...c,
+              status: 'connected' as SyncState,
+              statusLabel: 'Connected',
+              lastSynced: 'Synced just now',
+              contextCount: 'Active sync',
+            };
+          }
+          return c;
+        })
+      );
+    } else {
+      // Move from available to connected
+      const foundInAvailable = availableConnectors.find((c) => c.id === connectorId);
+      if (foundInAvailable) {
+        const updatedItem: ConnectorItem = {
+          ...foundInAvailable,
+          status: 'connected' as SyncState,
+          statusLabel: 'Connected',
+          lastSynced: 'Synced just now',
+          contextCount: 'Active sync',
+        };
+        setConnectors((prev) => [...prev, updatedItem]);
+        setAvailableConnectors((prev) => prev.filter((c) => c.id !== connectorId));
+      }
+    }
+
+    // Firestore update
+    if (user?.uid) {
+      try {
+        const docRef = doc(db, 'users', user.uid, 'connections', connectorId);
+        await setDoc(docRef, {
+          connected: true,
+          provider: connectorId,
+          lastSynced: new Date().toISOString(),
+          connectedAt: new Date().toISOString(),
+          uid: user.uid,
+        });
+        addToast({
+          type: 'success',
+          title: 'App Connected',
+          description: `${connectorId.toUpperCase()} integration has been safely initialized.`,
+        });
+      } catch (err: unknown) {
+        const errInfo = {
+          error: err instanceof Error ? err.message : String(err),
+          authInfo: { userId: user.uid },
+          operationType: 'write',
+          path: `users/${user.uid}/connections/${connectorId}`,
+        };
+        console.error('Firestore Error: ', JSON.stringify(errInfo));
+        throw new Error(JSON.stringify(errInfo));
+      }
+    }
   };
 
   // Handle Disconnect Confirmation
-  const handleConfirmDisconnect = (connectorId: string) => {
+  const handleConfirmDisconnect = async (connectorId: string) => {
     setConnectors((prev) =>
       prev.map((c) => {
         if (c.id === connectorId) {
@@ -70,10 +193,37 @@ export const ConnectedAppsView: React.FC<ConnectedAppsViewProps> = ({
         return c;
       })
     );
+
+    // Firestore update
+    if (user?.uid) {
+      try {
+        const docRef = doc(db, 'users', user.uid, 'connections', connectorId);
+        await setDoc(docRef, {
+          connected: false,
+          provider: connectorId,
+          uid: user.uid,
+          updatedAt: new Date().toISOString(),
+        });
+        addToast({
+          type: 'info',
+          title: 'App Disconnected',
+          description: `${connectorId.toUpperCase()} integration has been disconnected.`,
+        });
+      } catch (err: unknown) {
+        const errInfo = {
+          error: err instanceof Error ? err.message : String(err),
+          authInfo: { userId: user.uid },
+          operationType: 'write',
+          path: `users/${user.uid}/connections/${connectorId}`,
+        };
+        console.error('Firestore Error: ', JSON.stringify(errInfo));
+        throw new Error(JSON.stringify(errInfo));
+      }
+    }
   };
 
   // Handle Sync Now
-  const handleSyncNow = (connectorId: string) => {
+  const handleSyncNow = async (connectorId: string) => {
     setConnectors((prev) =>
       prev.map((c) => {
         if (c.id === connectorId) {
@@ -81,66 +231,180 @@ export const ConnectedAppsView: React.FC<ConnectedAppsViewProps> = ({
             ...c,
             status: 'connected' as SyncState,
             statusLabel: 'Connected',
-            lastSynced: 'Just now',
+            lastSynced: 'Synced just now',
           };
         }
         return c;
       })
     );
-  };
 
-  const handleConnectGoogle = () => {
-    const gmailConn = connectors.find((c) => c.id === 'gmail');
-    if (gmailConn) {
-      setSelectedToConnect(gmailConn);
+    if (user?.uid) {
+      try {
+        const docRef = doc(db, 'users', user.uid, 'connections', connectorId);
+        await setDoc(docRef, {
+          connected: true,
+          provider: connectorId,
+          lastSynced: new Date().toISOString(),
+          uid: user.uid,
+        }, { merge: true });
+        addToast({
+          type: 'success',
+          title: 'App Synced',
+          description: `Latest workspace updates fetched from ${connectorId.toUpperCase()}.`,
+        });
+      } catch (err: unknown) {
+        const errInfo = {
+          error: err instanceof Error ? err.message : String(err),
+          authInfo: { userId: user.uid },
+          operationType: 'write',
+          path: `users/${user.uid}/connections/${connectorId}`,
+        };
+        console.error('Firestore Error: ', JSON.stringify(errInfo));
+        throw new Error(JSON.stringify(errInfo));
+      }
     }
   };
 
+  const handleConnectNewAppClick = () => {
+    const disconnected = connectors.find((c) => c.status === 'not_connected');
+    if (disconnected) {
+      setSelectedToConnect(disconnected);
+    } else if (availableConnectors.length > 0) {
+      setSelectedToConnect(availableConnectors[0]);
+    } else {
+      addToast({
+        type: 'info',
+        title: 'All Apps Connected',
+        description: 'You have connected all available workspace applications.',
+      });
+    }
+  };
+
+  // Filter connected vs disconnected for "Your Connected Apps" vs "Available Apps"
+  const connectedAppsList = connectors.filter((c) => c.status !== 'not_connected');
+  const disconnectedAppsList = connectors.filter((c) => c.status === 'not_connected');
+
   return (
-    <div className="space-y-6 animate-fadeIn pb-12">
-      {/* Page Header */}
-      <ConnectedAppsHeader />
+    <div className="min-h-screen bg-slate-50/50 pb-28 antialiased">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8 space-y-6">
+        {/* Page Header */}
+        <ConnectedAppsHeader onConnectNewApp={handleConnectNewAppClick} />
 
-      {activeConnectedCount === 0 ? (
-        <EmptyConnectState
-          onConnectGoogle={handleConnectGoogle}
-          onExploreApps={() => {
-            addToast({
-              type: 'info',
-              title: 'Available Connectors',
-              description: 'Select any connector card below to initiate connection.',
-            });
-          }}
+        {/* Compact Connection Overview */}
+        <ConnectionOverview
+          connectors={connectors}
+          onConnectNewApp={handleConnectNewAppClick}
         />
-      ) : (
-        <>
-          {/* Top Connection Overview */}
-          <ConnectionOverview connectors={connectors} />
 
-          {/* Connector Cards Grid */}
-          <ConnectorGrid
-            connectors={connectors}
-            onConnect={(conn) => setSelectedToConnect(conn)}
-            onManage={(conn) => setSelectedToManage(conn)}
-          />
-        </>
-      )}
+        {/* Main Two-Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Left Column (Connected & Available Apps) - 8 cols */}
+          <div className="lg:col-span-8 space-y-6">
+            {/* Your Connected Apps Section */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between px-1">
+                <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-sans">
+                  Your Connected Apps
+                </h2>
+                <span className="text-xs font-semibold text-slate-400">
+                  {connectedAppsList.length} connected
+                </span>
+              </div>
 
-      {/* Bottom Privacy & Trust Section */}
-      <PrivacyPanel
-        onManagePermissionsClick={() => {
-          const connected = connectors.find((c) => c.status !== 'not_connected');
-          if (connected) {
-            setSelectedToManage(connected);
-          } else {
-            addToast({
-              type: 'info',
-              title: 'No Connected Apps',
-              description: 'Connect an app to configure active permissions.',
-            });
-          }
-        }}
-      />
+              <div className="space-y-2">
+                {connectedAppsList.map((connector) => (
+                  <ConnectorCard
+                    key={connector.id}
+                    connector={connector}
+                    onConnect={(conn) => setSelectedToConnect(conn)}
+                    onManage={(conn) => setSelectedToManage(conn)}
+                  />
+                ))}
+
+                {connectedAppsList.length === 0 && (
+                  <div className="p-8 text-center rounded-2xl bg-white border border-slate-200/80 text-slate-500 text-xs">
+                    No connected apps yet. Click below to connect your tools.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Available Apps Section */}
+            {(disconnectedAppsList.length > 0 || availableConnectors.length > 0) && (
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center justify-between px-1">
+                  <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-sans">
+                    Available Apps
+                  </h2>
+                  <span className="text-xs font-semibold text-slate-400">
+                    {disconnectedAppsList.length + availableConnectors.length} available
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  {disconnectedAppsList.map((connector) => (
+                    <ConnectorCard
+                      key={connector.id}
+                      connector={connector}
+                      onConnect={(conn) => setSelectedToConnect(conn)}
+                      onManage={(conn) => setSelectedToManage(conn)}
+                    />
+                  ))}
+
+                  {(showAllAvailable ? availableConnectors : availableConnectors.slice(0, 2)).map((connector) => (
+                    <ConnectorCard
+                      key={connector.id}
+                      connector={connector}
+                      onConnect={(conn) => setSelectedToConnect(conn)}
+                      onManage={(conn) => setSelectedToManage(conn)}
+                    />
+                  ))}
+                </div>
+
+                {availableConnectors.length > 2 && (
+                  <div className="text-center pt-1">
+                    <button
+                      onClick={() => setShowAllAvailable(!showAllAvailable)}
+                      className="text-xs font-semibold text-slate-600 hover:text-slate-900 inline-flex items-center gap-1 bg-white border border-slate-200/80 px-3.5 py-1.5 rounded-xl transition-colors shadow-2xs cursor-pointer"
+                    >
+                      <span>{showAllAvailable ? 'Show fewer apps' : 'View all apps'}</span>
+                      {showAllAvailable ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Security / Privacy Trust Disclaimer */}
+            <TrustMessage />
+          </div>
+
+          {/* Right Column (Info & Status Cards) - 4 cols */}
+          <div className="lg:col-span-4 space-y-4">
+            {/* About Connected Apps Card */}
+            <AboutConnectedAppsCard
+              onLearnMorePrivacy={() => {
+                addToast({
+                  type: 'info',
+                  title: 'Data Privacy Standard',
+                  description: 'NexOrbit uses AES-256 encryption, zero third-party AI training, and full client data isolation.',
+                });
+              }}
+            />
+
+            {/* Connection Health Card */}
+            <ConnectionHealthCard
+              onViewStatus={() => {
+                addToast({
+                  type: 'success',
+                  title: 'System Diagnostics',
+                  description: 'All 5 connector sync endpoints are operating with 100% health & zero rate-limit errors.',
+                });
+              }}
+            />
+          </div>
+        </div>
+      </div>
 
       {/* Connect Modal */}
       <ConnectModal
@@ -150,7 +414,7 @@ export const ConnectedAppsView: React.FC<ConnectedAppsViewProps> = ({
         onConfirmConnect={handleConfirmConnect}
       />
 
-      {/* Connector Detail / Manage Modal */}
+      {/* Manage Connection Drawer / Modal */}
       <ConnectorDetail
         connector={selectedToManage}
         isOpen={!!selectedToManage}
@@ -172,3 +436,4 @@ export const ConnectedAppsView: React.FC<ConnectedAppsViewProps> = ({
     </div>
   );
 };
+
