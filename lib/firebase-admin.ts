@@ -2,6 +2,7 @@ import { initializeApp, getApps, cert, App } from 'firebase-admin/app';
 import { getAuth, Auth, DecodedIdToken } from 'firebase-admin/auth';
 import { getFirestore, Firestore } from 'firebase-admin/firestore';
 import { ErrorCode, NexorbitError } from '@/types/errors';
+import appletConfig from '../firebase-applet-config.json';
 
 let adminApp: App | null = null;
 
@@ -10,7 +11,7 @@ export function getFirebaseAdminApp(): App {
     if (getApps().length > 0) {
       adminApp = getApps()[0];
     } else {
-      const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+      const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || appletConfig?.projectId;
       const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
       const privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY
         ? process.env.FIREBASE_ADMIN_PRIVATE_KEY.replace(/\\n/g, '\n')

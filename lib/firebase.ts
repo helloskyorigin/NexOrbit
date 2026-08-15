@@ -1,23 +1,26 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, GithubAuthProvider } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
+import appletConfig from '../firebase-applet-config.json';
 
 export const isFirebaseConfigured = (): boolean => {
+  const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY || appletConfig?.apiKey;
+  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || appletConfig?.projectId;
   return (
-    !!process.env.NEXT_PUBLIC_FIREBASE_API_KEY &&
-    process.env.NEXT_PUBLIC_FIREBASE_API_KEY !== 'demo-api-key' &&
-    !!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID &&
-    process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID !== 'nexorbit-demo'
+    !!apiKey &&
+    apiKey !== 'demo-api-key' &&
+    !!projectId &&
+    projectId !== 'nexorbit-demo'
   );
 };
 
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || 'demo-api-key',
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || 'nexorbit-demo.firebaseapp.com',
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'nexorbit-demo',
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'nexorbit-demo.appspot.com',
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '1234567890',
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '1:1234567890:web:1234567890',
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || appletConfig?.apiKey || 'demo-api-key',
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || appletConfig?.authDomain || 'nexorbit-demo.firebaseapp.com',
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || appletConfig?.projectId || 'nexorbit-demo',
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || appletConfig?.storageBucket || 'nexorbit-demo.appspot.com',
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || appletConfig?.messagingSenderId || '1234567890',
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || appletConfig?.appId || '1:1234567890:web:1234567890',
 };
 
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);

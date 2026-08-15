@@ -141,6 +141,25 @@ export function getFriendlyAuthErrorMessage(error: unknown): AuthErrorInfo {
       };
 
     // Connectivity & network
+    case 'auth/unauthorized-domain':
+      return {
+        code,
+        title: 'Unauthorized Domain',
+        message: 'This domain is not authorized in Firebase Console. Please add this domain in Firebase Authentication > Settings > Authorized Domains.',
+        targetField: 'general',
+        actionType: 'retry',
+      };
+
+    case 'auth/invalid-api-key':
+    case 'auth/api-key-not-valid-please-pass-a-valid-api-key':
+      return {
+        code,
+        title: 'Invalid API Key',
+        message: 'Firebase API key is missing or invalid. Please check your project settings.',
+        targetField: 'general',
+        actionType: 'retry',
+      };
+
     case 'auth/network-request-failed':
       return {
         code,
