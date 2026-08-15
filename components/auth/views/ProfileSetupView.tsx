@@ -105,12 +105,6 @@ export const ProfileSetupView: React.FC = () => {
 
   const handleStep3Submit = (e: React.FormEvent) => {
     e.preventDefault();
-    clearError();
-    setStep(4);
-  };
-
-  const handleFinalSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
     if (loading) return;
     const validation = validateNameInput(displayName);
     if (!validation.isValid) {
@@ -133,24 +127,21 @@ export const ProfileSetupView: React.FC = () => {
       <div className="space-y-2">
         <div className="flex items-center justify-between text-xs font-semibold text-slate-400">
           <span>
-            {step === 1 && 'Step 1 of 4: Your Name'}
-            {step === 2 && 'Step 2 of 4: Country / Region'}
-            {step === 3 && 'Step 3 of 4: Language'}
-            {step === 4 && 'Step 4 of 4: Timezone'}
+            {step === 1 && 'Step 1 of 3: Your Name'}
+            {step === 2 && 'Step 2 of 3: Country / Region'}
+            {step === 3 && 'Step 3 of 3: Language'}
           </span>
           <span className="text-[11px] font-medium text-slate-500">
-            {step === 1 && '25%'}
-            {step === 2 && '50%'}
-            {step === 3 && '75%'}
-            {step === 4 && '100%'}
+            {step === 1 && '33%'}
+            {step === 2 && '66%'}
+            {step === 3 && '100%'}
           </span>
         </div>
         {/* Multi-segment Progress Bar */}
-        <div className="grid grid-cols-4 gap-1.5 h-1.5 w-full">
+        <div className="grid grid-cols-3 gap-1.5 h-1.5 w-full">
           <div className={cn('h-full rounded-full transition-all duration-300', step >= 1 ? 'bg-slate-950' : 'bg-slate-200')} />
           <div className={cn('h-full rounded-full transition-all duration-300', step >= 2 ? 'bg-slate-950' : 'bg-slate-200')} />
           <div className={cn('h-full rounded-full transition-all duration-300', step >= 3 ? 'bg-slate-950' : 'bg-slate-200')} />
-          <div className={cn('h-full rounded-full transition-all duration-300', step >= 4 ? 'bg-slate-950' : 'bg-slate-200')} />
         </div>
       </div>
 
@@ -356,73 +347,8 @@ export const ProfileSetupView: React.FC = () => {
           <div className="flex items-center gap-2 pt-2">
             <button
               type="button"
-              onClick={() => setStep(2)}
-              className="h-11 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-medium text-sm transition-colors cursor-pointer flex items-center justify-center gap-1.5"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span>Back</span>
-            </button>
-            <button
-              type="submit"
-              className="flex-1 h-11 px-4 rounded-xl bg-slate-950 hover:bg-slate-900 active:scale-[0.99] text-white font-medium text-sm shadow-xs transition-all duration-150 cursor-pointer flex items-center justify-center gap-2 group"
-            >
-              <span>Continue</span>
-              <ArrowRight className="h-4 w-4 opacity-80 group-hover:translate-x-0.5 transition-transform" />
-            </button>
-          </div>
-        </form>
-      )}
-
-      {/* ================= STEP 4: TIMEZONE ================= */}
-      {step === 4 && (
-        <form onSubmit={handleFinalSubmit} className="space-y-4 animate-in fade-in duration-150" noValidate>
-          <div className="space-y-1">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-950">
-              Confirm your timezone
-            </h1>
-            <p className="text-sm text-slate-500 font-normal leading-relaxed">
-              We auto-detected your local timezone. You can adjust it if needed.
-            </p>
-          </div>
-
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-medium text-slate-700 block">
-                Timezone
-              </label>
-              <span className="text-[10px] font-medium text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded">
-                Auto-detected
-              </span>
-            </div>
-            <div className="relative">
-              <Clock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <input
-                type="text"
-                value={selectedTimezone}
-                onChange={(e) => setSelectedTimezone(e.target.value)}
-                placeholder="e.g. America/New_York or Asia/Kolkata"
-                className="w-full h-11 pl-10 pr-3.5 text-sm bg-white text-slate-900 placeholder:text-slate-400 rounded-xl border border-slate-200 focus:border-slate-950 focus:ring-2 focus:ring-slate-950/10 focus:outline-none transition-all duration-150"
-              />
-            </div>
-          </div>
-
-          <div className="bg-slate-50 rounded-xl p-3.5 border border-slate-200 space-y-1">
-            <div className="text-xs font-semibold text-slate-900 flex items-center gap-1.5">
-              <Globe className="h-3.5 w-3.5 text-slate-500" />
-              <span>Summary</span>
-            </div>
-            <div className="text-xs text-slate-600 space-y-0.5 pl-5">
-              <p><span className="font-medium text-slate-900">Name:</span> {displayName}</p>
-              <p><span className="font-medium text-slate-900">Country:</span> {selectedCountry?.name} {selectedCountry?.flag}</p>
-              <p><span className="font-medium text-slate-900">Language:</span> {SUPPORTED_LANGUAGES.find(l => l.code === selectedLanguage)?.nativeName || selectedLanguage}</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 pt-2">
-            <button
-              type="button"
               disabled={loading}
-              onClick={() => setStep(3)}
+              onClick={() => setStep(2)}
               className="h-11 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-medium text-sm transition-colors cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
             >
               <ArrowLeft className="h-4 w-4" />

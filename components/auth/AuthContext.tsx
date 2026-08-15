@@ -4,6 +4,8 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import {
   onAuthStateChanged,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signOut as firebaseSignOut,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -107,60 +109,94 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const loadOrCreateUserProfile = async (firebaseUser: any) => {
     return await getOrCreateUserProfile(firebaseUser);
   };
-// Listen to Firebase Auth state changes
+  // Check for redirect result errors on mount
   useEffect(() => {
+    getRedirectResult(auth).catch((err) => {
+      console.warn('Redirect auth error:', err);
+      setAuthErrorInfo(getFriendlyAuthErrorMessage(err));
+    });
+  }, []);
+
+  // Listen to Firebase Auth state changes
+  useEffect(() => {
+    let isInitialMount = true;
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        const profile = await loadOrCreateUserProfile(firebaseUser);
-        const provider = firebaseUser.providerData[0]?.providerId || 'password';
-        const displayName =
-          profile.displayName ||
-          firebaseUser.displayName ||
-          firebaseUser.email?.split('@')[0] ||
-          '';
-        const userLang = profile.language || 'en';
+        // If it's a new sign in flow (not just a page reload where we were already authenticated)
+        if (!isInitialMount && !isAuthenticated) {
+          setAuthView('authenticating');
+        }
 
-        // Check whether onboarding is completed
-        const hasCompletedOnboarding =
-          profile.onboardingCompleted === true ||
-          (!!profile.displayName && !!profile.country);
+        try {
+          const profilePromise = loadOrCreateUserProfile(firebaseUser);
+          const timeoutPromise = new Promise<UserProfile>((_, reject) => 
+            setTimeout(() => reject(new Error('Profile initialization timed out')), 5000)
+          );
+          const profile = await Promise.race([profilePromise, timeoutPromise]);
+          
+          const provider = firebaseUser.providerData[0]?.providerId || 'password';
+          const displayName =
+            profile.displayName ||
+            firebaseUser.displayName ||
+            firebaseUser.email?.split('@')[0] ||
+            '';
+          const userLang = profile.language || 'en';
 
-        const updatedUser: AuthUser = {
-          uid: firebaseUser.uid,
-          email: firebaseUser.email || '',
-          displayName: displayName || 'User',
-          photoURL: firebaseUser.photoURL || undefined,
-          plan: 'Free Plan',
-          country: profile.country || 'India 🇮🇳',
-          language: userLang,
-          timezone: profile.timezone || 'Asia/Kolkata',
-          workStyle: profile.workStyle || 'General Productivity',
-          onboardingCompleted: hasCompletedOnboarding,
-          isNewUser: !hasCompletedOnboarding,
-          provider: provider,
-        };
+          // Check whether onboarding is completed
+          const hasCompletedOnboarding =
+            profile.onboardingCompleted === true ||
+            (!!profile.displayName && !!profile.country);
 
-        setUser(updatedUser);
-        setLanguageState((prev) => profile.language || prev || 'en');
+          const updatedUser: AuthUser = {
+            uid: firebaseUser.uid,
+            email: firebaseUser.email || '',
+            displayName: displayName || 'User',
+            photoURL: firebaseUser.photoURL || undefined,
+            plan: 'Free Plan',
+            country: profile.country || 'India 🇮🇳',
+            language: userLang,
+            timezone: profile.timezone || 'Asia/Kolkata',
+            workStyle: profile.workStyle || 'General Productivity',
+            onboardingCompleted: hasCompletedOnboarding,
+            isNewUser: !hasCompletedOnboarding,
+            provider: provider,
+          };
 
-        if (hasCompletedOnboarding) {
-          setIsAuthenticated(true);
-          setAuthView((prev) => {
-            if (
-              prev === 'welcome' ||
-              prev === 'authenticating' ||
-              prev === 'password' ||
-              prev === 'create-account' ||
-              prev === 'email-signin'
-            ) {
-              return 'success';
-            }
-            return prev;
+          setUser(updatedUser);
+          setLanguageState((prev) => profile.language || prev || 'en');
+
+          if (hasCompletedOnboarding) {
+            setIsAuthenticated(true);
+            setAuthView((prev) => {
+              if (
+                prev === 'welcome' ||
+                prev === 'authenticating' ||
+                prev === 'password' ||
+                prev === 'create-account' ||
+                prev === 'email-signin'
+              ) {
+                return 'success';
+              }
+              return prev;
+            });
+          } else {
+            // Direct new users to onboarding profile setup
+            setAuthView('profile-setup');
+            setIsAuthenticated(false);
+          }
+        } catch (error: any) {
+          console.error("Error loading user profile:", error);
+          setAuthErrorInfo({
+             code: 'custom',
+             message: error.message === 'Profile initialization timed out' 
+               ? 'Something is taking longer than expected. Please try again.'
+               : 'We couldn\'t prepare your workspace. Please try again.',
+             targetField: 'general'
           });
-        } else {
-          // Direct new users to onboarding profile setup
-          setAuthView('profile-setup');
+          setAuthView('error');
           setIsAuthenticated(false);
+          // Sign out so they can try again properly
+          firebaseSignOut(auth).catch(() => {});
         }
       } else {
         // No user logged in
@@ -174,73 +210,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
       }
       setAuthInitializing(false);
+      isInitialMount = false;
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [isAuthenticated]);
 
-  // REAL GOOGLE AUTHENTICATION
-  const signInWithGoogle = async () => {
+  // Handle OAuth provider with fallback
+  const handleOAuthSignIn = async (providerName: 'google' | 'github', providerObj: any) => {
     setLoading(true);
-    setOauthLoading('google');
+    setOauthLoading(providerName);
     clearError();
 
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      const firebaseUser = result.user;
-      const profile = await loadOrCreateUserProfile(firebaseUser);
-
-      const hasCompleted =
-        profile.onboardingCompleted === true ||
-        (!!profile.displayName && !!profile.country);
-
-      if (hasCompleted) {
-        setAuthView('success');
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        setIsAuthenticated(true);
+      await signInWithPopup(auth, providerObj);
+      // Success will be caught by onAuthStateChanged, which immediately transitions to authenticating
+      setAuthView('authenticating');
+    } catch (err: any) {
+      console.warn(`${providerName} Sign-In error:`, err);
+      if (
+        err.code === 'auth/popup-blocked' ||
+        err.code === 'auth/popup-closed-by-user' ||
+        err.code === 'auth/cancelled-popup-request'
+      ) {
+        setAuthErrorInfo({
+          code: err.code,
+          message: "Your browser blocked the sign-in window. We'll continue with secure sign-in.",
+          targetField: 'general',
+        });
+        try {
+          await signInWithRedirect(auth, providerObj);
+        } catch (redirectErr) {
+          setAuthErrorInfo(getFriendlyAuthErrorMessage(redirectErr));
+        }
       } else {
-        setAuthView('profile-setup');
+        setAuthErrorInfo(getFriendlyAuthErrorMessage(err));
       }
-    } catch (err: unknown) {
-      console.warn('Google Sign-In error:', err);
-      const friendlyError = getFriendlyAuthErrorMessage(err);
-      setAuthErrorInfo(friendlyError);
     } finally {
       setLoading(false);
       setOauthLoading(null);
     }
   };
 
+  // REAL GOOGLE AUTHENTICATION
+  const signInWithGoogle = async () => {
+    await handleOAuthSignIn('google', googleProvider);
+  };
+
   // REAL GITHUB AUTHENTICATION
   const signInWithGitHub = async () => {
-    setLoading(true);
-    setOauthLoading('github');
-    clearError();
-
-    try {
-      const result = await signInWithPopup(auth, githubProvider);
-      const firebaseUser = result.user;
-      const profile = await loadOrCreateUserProfile(firebaseUser);
-
-      const hasCompleted =
-        profile.onboardingCompleted === true ||
-        (!!profile.displayName && !!profile.country);
-
-      if (hasCompleted) {
-        setAuthView('success');
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        setIsAuthenticated(true);
-      } else {
-        setAuthView('profile-setup');
-      }
-    } catch (err: unknown) {
-      console.warn('GitHub Sign-In error:', err);
-      const friendlyError = getFriendlyAuthErrorMessage(err);
-      setAuthErrorInfo(friendlyError);
-    } finally {
-      setLoading(false);
-      setOauthLoading(null);
-    }
+    await handleOAuthSignIn('github', githubProvider);
   };
 
   // EMAIL STEP 1: VALIDATE EMAIL PRE-CHECK

@@ -176,7 +176,7 @@ export const AuthContainer: React.FC<AuthContainerProps> = ({ className }) => {
           </div>
 
           {/* Elevated Auth Card */}
-          <div className="w-full max-w-[420px] bg-white rounded-3xl p-7 sm:p-9 shadow-[0_4px_24px_rgba(0,0,0,0.03),0_1px_2px_rgba(0,0,0,0.04)] border border-slate-200/70 transition-all duration-200">
+          <div className="w-full max-w-[460px] bg-white rounded-3xl p-7 sm:p-9 shadow-[0_4px_24px_rgba(0,0,0,0.03),0_1px_2px_rgba(0,0,0,0.04)] border border-slate-200/70 transition-all duration-200">
             {renderCurrentView()}
           </div>
 
