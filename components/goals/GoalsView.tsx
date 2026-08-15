@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Sparkles,
   Plus,
@@ -14,6 +14,7 @@ import {
   Bot,
   RefreshCw,
   Zap,
+  Database,
 } from 'lucide-react';
 import {
   GoalItem,
@@ -44,6 +45,13 @@ import { ConnectedSourceModal } from './ConnectedSourceModal';
 import { Button } from '../ui/Button';
 import { useToast } from '../ui/Toast';
 import { cn } from '../../lib/utils';
+import { useAuth } from '../auth/AuthContext';
+import {
+  subscribeToGoals,
+  createGoal,
+  updateGoalInDb,
+  deleteGoalFromDb,
+} from '../../services/firestore/goals';
 
 export interface GoalsViewProps {
   onNavigate?: (pageId: string) => void;
@@ -51,16 +59,17 @@ export interface GoalsViewProps {
 
 export const GoalsView: React.FC<GoalsViewProps> = ({ onNavigate }) => {
   const { addToast } = useToast();
+  const { user } = useAuth();
 
   // Primary State
-  const [goals, setGoals] = useState<GoalItem[]>(INITIAL_GOALS);
-  const [archivedGoals, setArchivedGoals] = useState<GoalItem[]>(ARCHIVED_GOALS);
-  const [activeCategory, setActiveCategory] = useState<GoalCategory>('All Goals');
+  const [goals, setGoals] = useState<GoalItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showArchived, setShowArchived] = useState(false);
   const [highlightedGoalId, setHighlightedGoalId] = useState<string | null>(null);
 
   // Filter Dropdown State
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<GoalCategory>('All Goals');
   const [selectedPriorityFilter, setSelectedPriorityFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all');
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<'all' | 'on_track' | 'at_risk' | 'not_started'>('all');
   const [sortBy, setSortBy] = useState<'default' | 'progress_desc' | 'progress_asc' | 'date'>('default');
@@ -80,11 +89,58 @@ export const GoalsView: React.FC<GoalsViewProps> = ({ onNavigate }) => {
   // Categories list for top segmented bar
   const categories: GoalCategory[] = ['All Goals', 'Work', 'Personal', 'Learning', 'Health'];
 
-  // Filter & Sort Logic
+  // Subscribe to user's Goals in Firestore
+  useEffect(() => {
+    if (!user?.uid) return;
+
+    const unsubscribe = subscribeToGoals(
+      user.uid,
+      (fetchedGoals) => {
+        setGoals(fetchedGoals);
+        setLoading(false);
+      },
+      (err) => {
+        console.error('Error fetching goals from Firestore:', err);
+        setLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [user?.uid]);
+
+  // Seed demo goals handler
+  const handleSeedDemoGoals = async () => {
+    if (!user?.uid) return;
+    setLoading(true);
+    try {
+      for (const item of INITIAL_GOALS) {
+        const { id, ...cleanGoal } = item;
+        await createGoal(user.uid, cleanGoal);
+      }
+      addToast({
+        title: 'Goals Initialized',
+        description: 'Successfully seeded modern target goals into your real Firestore.',
+        type: 'success',
+      });
+    } catch (err) {
+      console.error('Error seeding goals:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Filter & Sort Logic for Active and Archived
+  const activeGoals = useMemo(() => {
+    return goals.filter((g) => !g.isArchived);
+  }, [goals]);
+
+  const archivedGoals = useMemo(() => {
+    return goals.filter((g) => !!g.isArchived);
+  }, [goals]);
+
   const filteredGoals = useMemo(() => {
-    return goals
+    return activeGoals
       .filter((goal) => {
-        if (goal.isArchived) return false;
         // Category filter
         if (activeCategory !== 'All Goals' && goal.category !== activeCategory) {
           return false;
@@ -103,81 +159,96 @@ export const GoalsView: React.FC<GoalsViewProps> = ({ onNavigate }) => {
         if (sortBy === 'progress_asc') return a.progress - b.progress;
         return 0; // default initial order
       });
-  }, [goals, activeCategory, selectedPriorityFilter, selectedStatusFilter, sortBy]);
+  }, [activeGoals, activeCategory, selectedPriorityFilter, selectedStatusFilter, sortBy]);
 
   // Actions
-  const handleToggleCompleteGoal = (goalId: string) => {
-    setGoals((prev) =>
-      prev.map((g) => {
-        if (g.id === goalId) {
-          const isCompleted = g.status === 'completed';
-          return {
-            ...g,
-            status: isCompleted ? 'on_track' : 'completed',
-            progress: isCompleted ? 50 : 100,
-          };
-        }
-        return g;
-      })
-    );
-    addToast({
-      title: 'Goal Status Synchronized',
-      description: 'Progress and workspace dependencies updated.',
-      type: 'success',
-    });
-  };
-
-  const handlePauseGoal = (goalId: string) => {
-    setGoals((prev) =>
-      prev.map((g) => {
-        if (g.id === goalId) {
-          const nextStatus = g.status === 'paused' ? 'on_track' : 'paused';
-          return { ...g, status: nextStatus };
-        }
-        return g;
-      })
-    );
-    addToast({
-      title: 'Goal Pacing Updated',
-      description: 'Pacing schedule recalculated in NexOrbit.',
-      type: 'info',
-    });
-  };
-
-  const handleArchiveGoal = (goalId: string) => {
+  const handleToggleCompleteGoal = async (goalId: string) => {
     const target = goals.find((g) => g.id === goalId);
     if (!target) return;
 
-    setGoals((prev) => prev.filter((g) => g.id !== goalId));
-    setArchivedGoals((prev) => [{ ...target, isArchived: true }, ...prev]);
-
-    addToast({
-      title: 'Goal Archived',
-      description: `Moved "${target.title}" to archived goals.`,
-      type: 'info',
-    });
+    const isCompleted = target.status === 'completed';
+    try {
+      await updateGoalInDb(goalId, {
+        status: isCompleted ? 'on_track' : 'completed',
+        progress: isCompleted ? 50 : 100,
+      });
+      addToast({
+        title: 'Goal Status Synchronized',
+        description: 'Progress and workspace dependencies updated.',
+        type: 'success',
+      });
+    } catch (err) {
+      console.error('Error toggling goal completion:', err);
+    }
   };
 
-  const handleDeleteGoal = (goalId: string) => {
-    setGoals((prev) => prev.filter((g) => g.id !== goalId));
-    addToast({
-      title: 'Goal Removed',
-      description: 'Goal permanently removed from active workspace.',
-      type: 'info',
-    });
+  const handlePauseGoal = async (goalId: string) => {
+    const target = goals.find((g) => g.id === goalId);
+    if (!target) return;
+
+    const nextStatus = target.status === 'paused' ? 'on_track' : 'paused';
+    try {
+      await updateGoalInDb(goalId, { status: nextStatus });
+      addToast({
+        title: 'Goal Pacing Updated',
+        description: 'Pacing schedule recalculated in NexOrbit.',
+        type: 'info',
+      });
+    } catch (err) {
+      console.error('Error pausing goal:', err);
+    }
   };
 
-  const handleCreateGoal = (newGoal: GoalItem) => {
-    setGoals((prev) => [newGoal, ...prev]);
-    setHighlightedGoalId(newGoal.id);
-    setTimeout(() => {
-      setHighlightedGoalId(null);
-    }, 3000);
+  const handleArchiveGoal = async (goalId: string) => {
+    try {
+      await updateGoalInDb(goalId, { isArchived: true });
+      addToast({
+        title: 'Goal Archived',
+        description: 'Moved the selected goal to archived goals.',
+        type: 'info',
+      });
+    } catch (err) {
+      console.error('Error archiving goal:', err);
+    }
   };
 
-  const handleUpdateGoal = (updatedGoal: GoalItem) => {
-    setGoals((prev) => prev.map((g) => (g.id === updatedGoal.id ? updatedGoal : g)));
-    setSelectedGoalForWorkspace(updatedGoal);
+  const handleDeleteGoal = async (goalId: string) => {
+    try {
+      await deleteGoalFromDb(goalId);
+      addToast({
+        title: 'Goal Removed',
+        description: 'Goal permanently removed from active workspace.',
+        type: 'info',
+      });
+    } catch (err) {
+      console.error('Error deleting goal:', err);
+    }
+  };
+
+  const handleCreateGoal = async (newGoal: GoalItem) => {
+    if (!user?.uid) return;
+    try {
+      const { id, ...cleanGoal } = newGoal;
+      const newId = await createGoal(user.uid, cleanGoal);
+      setHighlightedGoalId(newId);
+      setIsNewGoalModalOpen(false);
+      setTimeout(() => {
+        setHighlightedGoalId(null);
+      }, 3000);
+    } catch (err) {
+      console.error('Error creating goal:', err);
+    }
+  };
+
+  const handleUpdateGoal = async (updatedGoal: GoalItem) => {
+    if (!updatedGoal.id) return;
+    try {
+      const { id, ...cleanGoal } = updatedGoal;
+      await updateGoalInDb(id, cleanGoal);
+      setSelectedGoalForWorkspace(updatedGoal);
+    } catch (err) {
+      console.error('Error updating goal:', err);
+    }
   };
 
   const handleFocusGoal = (goalId: string) => {
@@ -220,7 +291,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({ onNavigate }) => {
           </p>
         </div>
 
-        {/* Top Right: Status, Bell, User Avatar & Action Buttons */}
+        {/* Top Right Actions */}
         <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
           {/* Synced Status Badge */}
           <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100/90 border border-slate-200/60 text-xs font-medium text-slate-700">
@@ -233,7 +304,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({ onNavigate }) => {
             onClick={() =>
               addToast({
                 title: 'Notifications',
-                description: 'All 6 goals are currently synchronized with your workspace.',
+                description: 'All goals are currently synchronized with your workspace.',
                 type: 'info',
               })
             }
@@ -247,9 +318,9 @@ export const GoalsView: React.FC<GoalsViewProps> = ({ onNavigate }) => {
           <div
             onClick={() => onNavigate?.('settings')}
             className="h-9 w-9 rounded-full bg-slate-800 text-white font-bold text-xs flex items-center justify-center cursor-pointer shadow-2xs hover:scale-105 transition-transform"
-            title="Aryan Mehta"
+            title={user?.displayName || 'User profile'}
           >
-            N
+            {user?.displayName?.[0] || 'U'}
           </div>
 
           {/* Review with AI Button */}
@@ -277,7 +348,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({ onNavigate }) => {
             Add Goal
           </Button>
 
-          {/* Primary + New Goal Button with dropdown */}
+          {/* Primary New Goal Button */}
           <div className="relative inline-flex items-center">
             <button
               onClick={() => {
@@ -369,64 +440,37 @@ export const GoalsView: React.FC<GoalsViewProps> = ({ onNavigate }) => {
                     Filter by Status
                   </span>
                   <div className="grid grid-cols-2 gap-1.5 text-xs">
-                    {(
-                      [
-                        { id: 'all', label: 'All Statuses' },
-                        { id: 'on_track', label: 'On Track' },
-                        { id: 'at_risk', label: 'At Risk' },
-                        { id: 'not_started', label: 'Not Started' },
-                      ] as const
-                    ).map((s) => (
+                    {(['all', 'on_track', 'at_risk', 'not_started'] as const).map((s) => (
                       <button
-                        key={s.id}
-                        onClick={() => setSelectedStatusFilter(s.id)}
+                        key={s}
+                        onClick={() => setSelectedStatusFilter(s)}
                         className={cn(
-                          'px-2.5 py-1.5 rounded-lg font-medium text-left cursor-pointer transition-colors',
-                          selectedStatusFilter === s.id
+                          'px-2.5 py-1.5 rounded-lg font-medium text-left cursor-pointer transition-colors capitalize',
+                          selectedStatusFilter === s
                             ? 'bg-indigo-50 text-indigo-700 font-bold'
                             : 'hover:bg-slate-50 text-slate-600'
                         )}
                       >
-                        {s.label}
+                        {s === 'all' ? 'All Statuses' : s.replace('_', ' ')}
                       </button>
                     ))}
                   </div>
                 </div>
 
-                {/* Sort By */}
-                <div className="space-y-1.5">
+                {/* Sort Filter */}
+                <div className="space-y-1.5 pt-1 border-t border-slate-100">
                   <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                    Sort By
+                    Sort Order
                   </span>
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as any)}
-                    className="w-full text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-800"
+                    className="w-full text-xs font-semibold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg p-2 focus:outline-none focus:border-indigo-500"
                   >
-                    <option value="default">Default Recommended</option>
-                    <option value="progress_desc">Highest Progress</option>
-                    <option value="progress_asc">Lowest Progress</option>
+                    <option value="default">Default Order</option>
+                    <option value="progress_desc">Highest Progress First</option>
+                    <option value="progress_asc">Lowest Progress First</option>
                   </select>
-                </div>
-
-                {/* Reset Filters */}
-                <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
-                  <button
-                    onClick={() => {
-                      setSelectedPriorityFilter('all');
-                      setSelectedStatusFilter('all');
-                      setSortBy('default');
-                    }}
-                    className="text-xs text-slate-500 hover:text-slate-900 cursor-pointer font-medium"
-                  >
-                    Reset all
-                  </button>
-                  <button
-                    onClick={() => setIsFilterOpen(false)}
-                    className="text-xs bg-indigo-600 text-white font-semibold px-3 py-1 rounded-lg cursor-pointer hover:bg-indigo-500"
-                  >
-                    Apply
-                  </button>
                 </div>
               </div>
             </>
@@ -434,23 +478,54 @@ export const GoalsView: React.FC<GoalsViewProps> = ({ onNavigate }) => {
         </div>
       </div>
 
-      {/* 3. AI SUMMARY BANNER */}
-      <AISummaryBanner
-        onViewInsights={() => setIsAiInsightsOpen(true)}
-        onFocusGoal={handleFocusGoal}
-      />
+      {/* 3. AISUMMARY BANNER */}
+      <AISummaryBanner goalsCount={goals.length} />
 
-      {/* 4. MAIN 2-COLUMN WORKSPACE GRID */}
+      {/* 4. MAIN WORKSPACE CONTENT */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* LEFT COLUMN: MAIN GOAL LIST (8 COLS) */}
+        {/* LEFT COLUMN: ACTIVE GOALS CARDS (8 COLS) */}
         <div className="lg:col-span-8 space-y-4">
-          {filteredGoals.length === 0 ? (
-            <div className="p-8 rounded-2xl bg-white border border-slate-200/80 text-center space-y-3">
-              <div className="h-12 w-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto">
+          {goals.length === 0 && !loading ? (
+            /* PREMIUM EMPTY STATE */
+            <div className="bg-white rounded-3xl border border-slate-200/80 p-16 text-center shadow-xs space-y-4 flex flex-col items-center justify-center">
+              <div className="h-14 w-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shadow-3xs">
+                <Sparkles className="h-6 w-6 animate-pulse" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-base font-bold text-slate-900">Your alignment goals are empty.</h3>
+                <p className="text-xs text-slate-500 max-w-md leading-relaxed">
+                  Set target goals to align your emails, drive documents, and calendar schedules into real-time metrics.
+                </p>
+              </div>
+
+              <div className="pt-2 flex items-center gap-3">
+                <button
+                  onClick={() => {
+                    setNewGoalInitialMode('manual');
+                    setIsNewGoalModalOpen(true);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-all cursor-pointer shadow-xs"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Create a Goal</span>
+                </button>
+
+                <button
+                  onClick={handleSeedDemoGoals}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-all cursor-pointer"
+                >
+                  <Database className="h-3.5 w-3.5 text-indigo-600" />
+                  <span>Seed Demo Goals</span>
+                </button>
+              </div>
+            </div>
+          ) : filteredGoals.length === 0 ? (
+            <div className="bg-white rounded-3xl border border-slate-200/80 p-16 text-center shadow-2xs space-y-4">
+              <div className="h-12 w-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
                 <Filter className="h-6 w-6" />
               </div>
               <h3 className="text-base font-bold text-slate-900">No Goals Found</h3>
-              <p className="text-xs text-slate-500 max-w-sm mx-auto">
+              <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
                 No active alignment goals match the current category or filter criteria.
               </p>
               <Button
@@ -486,39 +561,41 @@ export const GoalsView: React.FC<GoalsViewProps> = ({ onNavigate }) => {
           )}
 
           {/* Collapsible Archived Goals Section */}
-          <div className="pt-2">
-            <button
-              onClick={() => setShowArchived(!showArchived)}
-              className="w-full py-2.5 px-4 rounded-xl hover:bg-slate-100/80 text-xs font-semibold text-slate-600 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-            >
-              <span>View archived goals ({archivedGoals.length})</span>
-              {showArchived ? (
-                <ChevronUp className="h-3.5 w-3.5 text-slate-400" />
-              ) : (
-                <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
-              )}
-            </button>
+          {archivedGoals.length > 0 && (
+            <div className="pt-2">
+              <button
+                onClick={() => setShowArchived(!showArchived)}
+                className="w-full py-2.5 px-4 rounded-xl hover:bg-slate-100/80 text-xs font-semibold text-slate-600 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <span>View archived goals ({archivedGoals.length})</span>
+                {showArchived ? (
+                  <ChevronUp className="h-3.5 w-3.5 text-slate-400" />
+                ) : (
+                  <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+                )}
+              </button>
 
-            {showArchived && (
-              <div className="space-y-3 pt-3 animate-in fade-in">
-                {archivedGoals.map((goal) => (
-                  <GoalCard
-                    key={goal.id}
-                    goal={goal}
-                    onClick={(g) => setSelectedGoalForWorkspace(g)}
-                    onEdit={(g) => setSelectedGoalForWorkspace(g)}
-                    onPause={handlePauseGoal}
-                    onArchive={handleArchiveGoal}
-                    onDelete={handleDeleteGoal}
-                    onToggleComplete={handleToggleCompleteGoal}
-                    onSourceClick={(g, source) => {
-                      setActiveSourceModal({ source, goal: g });
-                    }}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
+              {showArchived && (
+                <div className="space-y-3 pt-3 animate-in fade-in">
+                  {archivedGoals.map((goal) => (
+                    <GoalCard
+                      key={goal.id}
+                      goal={goal}
+                      onClick={(g) => setSelectedGoalForWorkspace(g)}
+                      onEdit={(g) => setSelectedGoalForWorkspace(g)}
+                      onPause={handlePauseGoal}
+                      onArchive={handleArchiveGoal}
+                      onDelete={handleDeleteGoal}
+                      onToggleComplete={handleToggleCompleteGoal}
+                      onSourceClick={(g, source) => {
+                        setActiveSourceModal({ source, goal: g });
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* RIGHT COLUMN: GOALS OVERVIEW, UPCOMING MILESTONES & AI RECOMMENDATIONS (4 COLS) */}

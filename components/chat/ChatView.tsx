@@ -6,6 +6,7 @@ import {
   History,
   X,
   Plus,
+  Sparkles,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import {
@@ -14,19 +15,21 @@ import {
   ChatMessage,
   SourceReference,
   ChatAction,
+  ChatAttachment,
 } from './types';
 import { ChatHeader } from './ChatHeader';
 import { ModeSelector } from './ModeSelector';
 import { UserMessage, AssistantMessage, TypingIndicator } from './MessageItem';
 import { RightContextPanel } from './RightContextPanel';
 import { ChatComposer } from './ChatComposer';
-import {
-  generateAIResponse,
-  MOCK_CHAT_SOURCES,
-  MOCK_CHAT_ACTIONS,
-  MOCK_MEMORY_DATA,
-} from './chatEngine';
 import { useToast } from '../ui/Toast';
+import { useAuth } from '../auth/AuthContext';
+import {
+  subscribeToConversations,
+  subscribeToMessages,
+  createConversation,
+  addMessage,
+} from '../../services/firestore/chat';
 import {
   ConflictDetailDrawer,
   EmailDrawer,
@@ -43,68 +46,11 @@ export interface ChatViewProps {
   className?: string;
 }
 
-const INITIAL_CONVERSATION: ChatConversation = {
-  id: 'conv-project-alpha',
-  title: "What's the latest Project Alpha proposal?",
-  updatedAt: '10:24 AM',
-  mode: 'auto',
-  sources: [
-    MOCK_CHAT_SOURCES.driveProposal,
-    MOCK_CHAT_SOURCES.gmailAlpha,
-    MOCK_CHAT_SOURCES.notionRoadmap,
-    MOCK_CHAT_SOURCES.calendarSync,
-  ],
-  actions: MOCK_CHAT_ACTIONS,
-  memory: MOCK_MEMORY_DATA,
-  messages: [
-    {
-      id: 'msg-user-1',
-      sender: 'user',
-      text: "What's the latest Project Alpha proposal?",
-      timestamp: '10:24 AM',
-      modeUsed: 'auto',
-    },
-    {
-      id: 'msg-ai-1',
-      sender: 'ai',
-      text: `Here's the latest Project Alpha proposal I found.\n\nThe newest version is Proposal v2.3, updated yesterday by you. It includes the revised timeline, budget breakdown, and client feedback summary.`,
-      timestamp: '10:24 AM',
-      modeUsed: 'auto',
-      document: {
-        title: 'Project Alpha Proposal v2.3.pdf',
-        source: 'Google Drive',
-        updatedAt: 'Updated May 11, 2024',
-        fileType: 'pdf',
-      },
-      highlights: [
-        'Timeline moved to Aug 2024 – Feb 2025',
-        'Budget increased by 12%',
-        'Client requested 3 additional features',
-        'Next review meeting on May 15',
-      ],
-      sourcesUsed: [
-        MOCK_CHAT_SOURCES.driveProposal,
-        MOCK_CHAT_SOURCES.gmailAlpha,
-        MOCK_CHAT_SOURCES.notionRoadmap,
-        MOCK_CHAT_SOURCES.calendarSync,
-      ],
-      actions: MOCK_CHAT_ACTIONS,
-      memoryContext: MOCK_MEMORY_DATA,
-    },
-  ],
-};
-
 const SUGGESTED_FOLLOW_UPS = [
-  'Summarize key changes',
-  'Show client feedback',
-  'Compare with v2.2',
+  'Show my action items',
+  'What are my current goals?',
+  'Draft a project update email',
 ];
-
-let idCounter = 5000;
-function createId(prefix: string): string {
-  idCounter += 1;
-  return `${prefix}-${idCounter}`;
-}
 
 export const ChatView: React.FC<ChatViewProps> = ({
   onNavigate,
@@ -112,18 +58,17 @@ export const ChatView: React.FC<ChatViewProps> = ({
   initialQuery = '',
   className,
 }) => {
+  const { user } = useAuth();
   const { addToast } = useToast();
 
-  const [conversations, setConversations] = useState<ChatConversation[]>([
-    INITIAL_CONVERSATION,
-  ]);
-  const [activeConversationId, setActiveConversationId] = useState<string>(
-    INITIAL_CONVERSATION.id
-  );
+  const [conversations, setConversations] = useState<ChatConversation[]>([]);
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [currentMode, setCurrentMode] = useState<AIMode>(initialMode);
   const [inputText, setInputText] = useState(initialQuery);
   const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
   const [isThinking, setIsThinking] = useState(false);
+  const [loadingConversations, setLoadingConversations] = useState(true);
 
   // Drawers & Modals state
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -137,9 +82,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const activeConv =
-    conversations.find((c) => c.id === activeConversationId) ||
-    conversations[0];
+  const activeConv = conversations.find((c) => c.id === activeConversationId);
 
   // Auto-scroll when messages change
   const scrollToBottom = useCallback(() => {
@@ -148,110 +91,142 @@ export const ChatView: React.FC<ChatViewProps> = ({
 
   useEffect(() => {
     scrollToBottom();
-  }, [activeConv?.messages, isThinking, scrollToBottom]);
+  }, [messages, isThinking, scrollToBottom]);
 
-  // Execute a user query with simulated AI response
-  const executeUserQuery = useCallback(
-    (query: string, convId: string, mode: AIMode, msgAttachments?: ChatAttachment[]) => {
-      const userMsg: ChatMessage = {
-        id: createId('msg-user'),
-        sender: 'user',
-        text: query,
-        timestamp: new Date().toLocaleTimeString([], {
-          hour: '2-digit',
-          minute: '2-digit',
-        }),
-        modeUsed: mode,
-        attachments: msgAttachments && msgAttachments.length > 0 ? msgAttachments : undefined,
-      };
+  // Subscribe to real-time conversations
+  useEffect(() => {
+    if (!user?.uid) return;
 
-      // Add user message immediately
-      setConversations((prev) =>
-        prev.map((c) => {
-          if (c.id === convId) {
-            return {
-              ...c,
-              updatedAt: 'Just now',
-              messages: [...c.messages, userMsg],
-            };
-          }
-          return c;
-        })
-      );
-
-      setIsThinking(true);
-
-      // Fast, smooth AI response delivery
-      setTimeout(() => {
-        const result = generateAIResponse(
-          query || (msgAttachments ? `[Attached ${msgAttachments.length} file(s)]` : ''),
-          mode
-        );
-        const aiMsg: ChatMessage = {
-          id: createId('msg-ai'),
-          sender: 'ai',
-          text: result.text,
-          timestamp: new Date().toLocaleTimeString([], {
-            hour: '2-digit',
-            minute: '2-digit',
-          }),
-          modeUsed: mode,
-          document: result.document,
-          highlights: result.highlights,
-          sourcesUsed: result.sourcesUsed,
-          findings: result.findings,
-          actions: result.actions,
-          memoryContext: result.memoryContext,
-        };
-
-        setConversations((prev) =>
-          prev.map((c) => {
-            if (c.id === convId) {
-              return {
-                ...c,
-                updatedAt: 'Just now',
-                sources: result.sourcesUsed || c.sources,
-                actions: result.actions || c.actions,
-                memory: result.memoryContext || c.memory,
-                messages: [...c.messages, aiMsg],
-              };
-            }
-            return c;
-          })
-        );
-        setIsThinking(false);
-      }, 550);
-    },
-    []
-  );
-
-  // Handle new conversation creation
-  const handleStartNewConversation = useCallback(
-    (initialUserText?: string, modeToUse?: AIMode) => {
-      const targetMode = modeToUse || currentMode;
-      const newId = createId('conv');
-      const newConv: ChatConversation = {
-        id: newId,
-        title: initialUserText
-          ? initialUserText.slice(0, 36) +
-            (initialUserText.length > 36 ? '...' : '')
-          : 'New Workspace Chat',
-        updatedAt: 'Just now',
-        mode: targetMode,
-        messages: [],
-      };
-
-      setConversations((prev) => [newConv, ...prev]);
-      setActiveConversationId(newId);
-
-      if (initialUserText) {
-        setTimeout(() => {
-          executeUserQuery(initialUserText, newId, targetMode);
-        }, 50);
+    const unsubscribe = subscribeToConversations(
+      user.uid,
+      (fetchedConvs) => {
+        const mapped = fetchedConvs.map((c) => ({
+          id: c.id || '',
+          title: c.title,
+          updatedAt: c.updatedAt
+            ? new Date(c.updatedAt.seconds * 1000).toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+              })
+            : 'Just now',
+          mode: (c.mode || 'auto') as AIMode,
+          messages: [],
+        }));
+        setConversations(mapped);
+        setLoadingConversations(false);
+        if (mapped.length > 0 && !activeConversationId) {
+          setActiveConversationId(mapped[0].id);
+        }
+      },
+      (err) => {
+        console.error('Error in subscribeToConversations:', err);
+        setLoadingConversations(false);
       }
-    },
-    [currentMode, executeUserQuery]
-  );
+    );
+
+    return () => unsubscribe();
+  }, [user?.uid, activeConversationId]);
+
+  // Subscribe to real-time messages for active conversation
+  useEffect(() => {
+    if (!activeConversationId) {
+      setTimeout(() => {
+        setMessages([]);
+      }, 0);
+      return;
+    }
+
+    const unsubscribe = subscribeToMessages(
+      activeConversationId,
+      (fetchedMsgs) => {
+        const mapped = fetchedMsgs.map((m) => ({
+          id: m.id || '',
+          sender: m.sender,
+          text: m.text,
+          timestamp: m.timestamp
+            ? new Date(m.timestamp.seconds * 1000).toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+              })
+            : 'Just now',
+          modeUsed: (m.modeUsed || 'auto') as AIMode,
+        }));
+        setMessages(mapped);
+      },
+      (err) => {
+        console.error('Error in subscribeToMessages:', err);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [activeConversationId]);
+
+  // Base message sending / execution function
+  const handleSendMessageWithQuery = useCallback(async (queryText: string) => {
+    if (!user?.uid || isThinking) return;
+    setIsThinking(true);
+
+    try {
+      let convId = activeConversationId;
+      if (!convId) {
+        // Create new conversation
+        const title = queryText.slice(0, 40) + (queryText.length > 40 ? '...' : '');
+        convId = await createConversation(user.uid, title, currentMode);
+        setActiveConversationId(convId);
+      }
+
+      // 1. Add User Message
+      await addMessage(convId, user.uid, {
+        sender: 'user',
+        text: queryText,
+        modeUsed: currentMode,
+      });
+
+      // 2. Mock small delay then add honest System message
+      setTimeout(async () => {
+        try {
+          await addMessage(convId!, user.uid, {
+            sender: 'ai',
+            text: 'AI reasoning is not connected yet in this build phase.',
+            modeUsed: currentMode,
+          });
+        } catch (err) {
+          console.error('Error adding system response:', err);
+        } finally {
+          setIsThinking(false);
+        }
+      }, 700);
+
+    } catch (err) {
+      console.error('Error handling message:', err);
+      setIsThinking(false);
+      addToast({
+        type: 'error',
+        title: 'Send Failed',
+        description: 'Failed to record message in Firestore.',
+      });
+    }
+  }, [user, activeConversationId, currentMode, isThinking, addToast]);
+
+  // Submit current input from composer
+  const handleSendMessage = (e?: React.FormEvent, submitAttachments?: ChatAttachment[]) => {
+    if (e) e.preventDefault();
+    const pendingAttachments = submitAttachments || attachments;
+    if ((!inputText.trim() && pendingAttachments.length === 0) || isThinking) return;
+
+    const query = inputText.trim();
+    setInputText('');
+    setAttachments([]);
+
+    handleSendMessageWithQuery(query);
+  };
+
+  // Handle new conversation click
+  const handleStartNewConversation = useCallback(() => {
+    setActiveConversationId(null);
+    setMessages([]);
+    setInputText('');
+  }, []);
 
   // Handle incoming command from Home screen
   useEffect(() => {
@@ -264,78 +239,26 @@ export const ChatView: React.FC<ChatViewProps> = ({
         sessionStorage.removeItem('pending_ask_command');
         if (pendingMode) {
           sessionStorage.removeItem('pending_chat_mode');
+          setTimeout(() => {
+            setCurrentMode(pendingMode);
+          }, 0);
         }
         const timer = setTimeout(() => {
-          if (pendingMode) {
-            setCurrentMode(pendingMode);
-          }
-          handleStartNewConversation(pendingCommand, pendingMode || currentMode);
-        }, 50);
+          handleSendMessageWithQuery(pendingCommand);
+        }, 100);
         return () => clearTimeout(timer);
       }
     }
-  }, [currentMode, handleStartNewConversation]);
-
-  // Submit current input
-  const handleSendMessage = (e?: React.FormEvent, submitAttachments?: ChatAttachment[]) => {
-    if (e) e.preventDefault();
-    const pendingAttachments = submitAttachments || attachments;
-    if ((!inputText.trim() && pendingAttachments.length === 0) || isThinking) return;
-
-    const query = inputText.trim();
-    const sendingAttachments = [...pendingAttachments];
-    setInputText('');
-    setAttachments([]);
-
-    let convId = activeConversationId;
-    if (!convId || !activeConv) {
-      const newId = createId('conv');
-      const newConv: ChatConversation = {
-        id: newId,
-        title: query
-          ? query.slice(0, 36) + (query.length > 36 ? '...' : '')
-          : sendingAttachments[0]?.name || 'New Chat',
-        updatedAt: 'Just now',
-        mode: currentMode,
-        messages: [],
-      };
-      setConversations((prev) => [newConv, ...prev]);
-      setActiveConversationId(newId);
-      convId = newId;
-    }
-
-    executeUserQuery(query, convId, currentMode, sendingAttachments);
-  };
+  }, [handleSendMessageWithQuery]);
 
   // Handle action triggers from context panel or assistant message
   const handleActionClick = (action: ChatAction) => {
     switch (action.actionType) {
-      case 'open_source':
-        if (action.payload) {
-          setSelectedSourceForPreview(action.payload);
-        } else {
-          setSelectedSourceForPreview(MOCK_CHAT_SOURCES.driveProposal);
-        }
-        break;
       case 'share':
         addToast({
           type: 'success',
           title: 'Link Copied',
           description: 'Shareable proposal link copied to clipboard.',
-        });
-        break;
-      case 'add_to_notion':
-        addToast({
-          type: 'success',
-          title: 'Notion Sync',
-          description: 'Project Alpha Proposal v2.3 embedded into Notion Hub.',
-        });
-        break;
-      case 'create_task':
-        addToast({
-          type: 'success',
-          title: 'Follow-up Task Created',
-          description: 'Added "Review Proposal v2.3" to Clean My Day priorities.',
         });
         break;
       case 'draft_reply':
@@ -402,23 +325,36 @@ export const ChatView: React.FC<ChatViewProps> = ({
 
           {/* Conversation Stream */}
           <div className="space-y-6 min-h-[320px]">
-            {activeConv.messages.map((msg) => (
+            {messages.map((msg) => (
               <div key={msg.id}>
                 {msg.sender === 'user' ? (
-                  <UserMessage message={msg} userInitial="S" />
+                  <UserMessage message={msg} userInitial={user?.displayName?.[0] || 'U'} />
                 ) : (
                   <AssistantMessage
                     message={msg}
                     onOpenDocument={(docTitle) =>
-                      setSelectedSourceForPreview(
-                        MOCK_CHAT_SOURCES.driveProposal
-                      )
+                      addToast({
+                        type: 'info',
+                        title: 'Document Preview',
+                        description: `Previewing ${docTitle} is not active in this phase.`,
+                      })
                     }
                     onOpenSource={(src) => setSelectedSourceForPreview(src)}
                   />
                 )}
               </div>
             ))}
+
+            {/* Empty state when no conversations or messages */}
+            {messages.length === 0 && !isThinking && (
+              <div className="flex flex-col items-center justify-center py-16 text-center bg-white rounded-3xl border border-slate-200/80 p-8 shadow-sm">
+                <Sparkles className="h-10 w-10 text-indigo-500 mb-4 animate-pulse" />
+                <h3 className="text-sm font-bold text-slate-900">No messages yet</h3>
+                <p className="text-xs text-slate-500 mt-1 max-w-sm leading-relaxed">
+                  Start your first real workspace conversation with NEXORBIT by entering a query below.
+                </p>
+              </div>
+            )}
 
             {/* Thinking Indicator */}
             {isThinking && <TypingIndicator />}
@@ -432,9 +368,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
               <button
                 key={idx}
                 type="button"
-                onClick={() =>
-                  executeUserQuery(chip, activeConv.id, currentMode)
-                }
+                onClick={() => handleSendMessageWithQuery(chip)}
                 className="px-4 py-2 rounded-2xl bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-950 border border-slate-200/80 shadow-3xs text-xs font-semibold transition-all active:scale-95 cursor-pointer"
               >
                 {chip}
@@ -445,18 +379,14 @@ export const ChatView: React.FC<ChatViewProps> = ({
             <button
               type="button"
               onClick={() => {
-                const lastUser = activeConv.messages
+                const lastUser = messages
                   .slice()
                   .reverse()
                   .find((m) => m.sender === 'user');
                 if (lastUser) {
-                  executeUserQuery(lastUser.text, activeConv.id, currentMode);
+                  handleSendMessageWithQuery(lastUser.text);
                 } else {
-                  executeUserQuery(
-                    "What's the latest Project Alpha proposal?",
-                    activeConv.id,
-                    currentMode
-                  );
+                  handleSendMessageWithQuery("Show my action items");
                 }
               }}
               className="p-2 rounded-2xl bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-900 border border-slate-200/80 shadow-3xs transition-all active:scale-95 cursor-pointer"
@@ -487,9 +417,9 @@ export const ChatView: React.FC<ChatViewProps> = ({
 
         {/* RIGHT CONTEXT PANEL */}
         <RightContextPanel
-          sources={activeConv.sources}
-          actions={activeConv.actions}
-          memory={activeConv.memory}
+          sources={[]}
+          actions={[]}
+          memory={undefined}
           onNavigateToMemory={() => onNavigate && onNavigate('memory')}
           onOpenSource={(src) => setSelectedSourceForPreview(src)}
           onExecuteAction={handleActionClick}
@@ -497,7 +427,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
             addToast({
               type: 'success',
               title: 'Proactive Watch Created',
-              description: 'NEXORBIT is now monitoring Project Alpha for updates.',
+              description: 'NEXORBIT is now monitoring for updates.',
             });
           }}
         />
@@ -576,7 +506,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
         onClose={() => setIsConflictDrawerOpen(false)}
         onPrepareResponse={() => setIsEmailDrawerOpen(true)}
         onOpenSource={(src) => setSelectedSourceForPreview(src)}
-        sources={Object.values(MOCK_CHAT_SOURCES).slice(0, 3)}
+        sources={[]}
       />
 
       <EmailDrawer
@@ -587,7 +517,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
           addToast({
             type: 'success',
             title: 'Reply Draft Dispatched',
-            description: 'Email sent to Rahul Mehta.',
+            description: 'Draft reply prepared successfully.',
           });
         }}
       />
@@ -607,7 +537,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
         onClose={() => setIsVoiceModalOpen(false)}
         onSubmitVoice={(query) => {
           setIsVoiceModalOpen(false);
-          executeUserQuery(query, activeConv.id, currentMode);
+          handleSendMessageWithQuery(query);
         }}
       />
 

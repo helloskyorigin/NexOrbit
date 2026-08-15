@@ -1,14 +1,20 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Sparkles, RotateCw, Flag, Check } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Sparkles, RotateCw, Flag, Check, Plus, AlertCircle } from 'lucide-react';
 import { DailyPlanItem } from './types';
-import { INITIAL_TODAY_PLAN_ITEMS } from './mockData';
 import { PlanSummaryCard } from './AIBrief';
 import { TaskRow } from './TaskRow';
 import { TaskActionModal } from './TaskActionModal';
 import { useToast } from '../ui/Toast';
 import { cn } from '../../lib/utils';
+import { useAuth } from '../auth/AuthContext';
+import {
+  subscribeToTasks,
+  updateTask,
+  createTask,
+  Task,
+} from '../../services/firestore/tasks';
 
 export interface CleanMyDayViewProps {
   onNavigate?: (pageId: string) => void;
@@ -19,53 +25,156 @@ export const CleanMyDayView: React.FC<CleanMyDayViewProps> = ({
   onNavigate,
   className,
 }) => {
+  const { user } = useAuth();
   const { addToast } = useToast();
 
   // State
-  const [planItems, setPlanItems] = useState<DailyPlanItem[]>(INITIAL_TODAY_PLAN_ITEMS);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isRegenerating, setIsRegenerating] = useState<boolean>(false);
   const [selectedTaskItem, setSelectedTaskItem] = useState<DailyPlanItem | null>(null);
+
+  // New task simple inline form state
+  const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const [quickTaskTitle, setQuickTaskTitle] = useState('');
+  const [quickTaskPriority, setQuickTaskPriority] = useState<'low' | 'medium' | 'high'>('medium');
+
+  // Real-time listener for user tasks
+  useEffect(() => {
+    if (!user?.uid) return;
+
+    const unsubscribe = subscribeToTasks(
+      user.uid,
+      (fetchedTasks) => {
+        setTasks(fetchedTasks);
+        setLoading(false);
+      },
+      (err) => {
+        console.error('Error in subscribeToTasks:', err);
+        setLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [user?.uid]);
+
+  // Map Firestore Task to DailyPlanItem
+  const planItems = useMemo<DailyPlanItem[]>(() => {
+    return tasks.map((t) => ({
+      id: t.id || '',
+      title: t.title,
+      isCompleted: t.status === 'completed',
+      priority: t.priority || 'medium',
+      timeSlot: t.connectorId ? 'App Sync' : 'Workspace Focus',
+      connectorId: t.connectorId || 'personal',
+      reason: t.description || 'Prioritized based on workspace activity metrics.',
+      impact: t.priority === 'high' ? 'High critical impact' : 'General workspace action',
+    }));
+  }, [tasks]);
 
   // Grouped Priorities
   const highPriorityItems = planItems.filter((item) => item.priority === 'high');
   const mediumPriorityItems = planItems.filter((item) => item.priority === 'medium');
   const lowPriorityItems = planItems.filter((item) => item.priority === 'low');
 
-  // Interactive Handlers
-  const handleToggleComplete = (id: string) => {
-    setPlanItems((prev) =>
-      prev.map((item) => {
-        if (item.id === id) {
-          const nextState = !item.isCompleted;
-          if (nextState) {
-            addToast({
-              title: 'Task completed',
-              description: `Completed: "${item.title}"`,
-              type: 'success',
-            });
-          }
-          return { ...item, isCompleted: nextState };
-        }
-        return item;
-      })
-    );
-  };
+  // Toggle complete via Firestore
+  const handleToggleComplete = async (id: string) => {
+    const item = planItems.find((p) => p.id === id);
+    if (!item) return;
 
-  const handleRegeneratePlan = () => {
-    setIsRegenerating(true);
-    setTimeout(() => {
-      setIsRegenerating(false);
-      setPlanItems(INITIAL_TODAY_PLAN_ITEMS.map((item) => ({ ...item, isCompleted: false })));
+    const nextCompleted = !item.isCompleted;
+    try {
+      await updateTask(id, {
+        status: nextCompleted ? 'completed' : 'pending',
+      });
       addToast({
-        title: 'Plan Regenerated',
-        description: 'NEXORBIT recalculated priorities based on your connected calendar, emails, and drive files.',
+        title: nextCompleted ? 'Task completed' : 'Task reopened',
+        description: `Updated: "${item.title}"`,
         type: 'success',
       });
-    }, 700);
+    } catch (err) {
+      console.error('Error updating task in Firestore:', err);
+      addToast({
+        title: 'Error',
+        description: 'Failed to update task in Firestore.',
+        type: 'error',
+      });
+    }
+  };
+
+  // Quick task creation
+  const handleQuickAddTask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user?.uid || !quickTaskTitle.trim()) return;
+
+    try {
+      await createTask(user.uid, {
+        title: quickTaskTitle.trim(),
+        description: 'Created quickly in Clean My Day.',
+        status: 'pending',
+        priority: quickTaskPriority,
+      });
+
+      setQuickTaskTitle('');
+      setShowQuickAdd(false);
+      addToast({
+        title: 'Task Created',
+        description: 'Your new task was added to Firestore in real-time.',
+        type: 'success',
+      });
+    } catch (err) {
+      console.error('Error creating task:', err);
+      addToast({
+        title: 'Error',
+        description: 'Failed to create task.',
+        type: 'error',
+      });
+    }
+  };
+
+  // Seed default daily focus tasks
+  const handleSeedFocusPlan = async () => {
+    if (!user?.uid) return;
+    setIsRegenerating(true);
+
+    try {
+      // Create high-quality real Firestore tasks
+      await createTask(user.uid, {
+        title: 'Review Project Alpha timeline',
+        description: 'Align milestones with updated Google Calendar schedules.',
+        status: 'pending',
+        priority: 'high',
+      });
+
+      await createTask(user.uid, {
+        title: 'Respond to Rahul’s proposal email',
+        description: 'Draft feedback on final commercial parameters.',
+        status: 'pending',
+        priority: 'medium',
+      });
+
+      await createTask(user.uid, {
+        title: 'Clean Drive proposal documentation',
+        description: 'Ensure correct client access permissions on sharing links.',
+        status: 'pending',
+        priority: 'low',
+      });
+
+      addToast({
+        title: 'Focus Plan Initialized',
+        description: 'Successfully seeded 3 smart workspace tasks to Firestore.',
+        type: 'success',
+      });
+    } catch (err) {
+      console.error('Error seeding tasks:', err);
+    } finally {
+      setIsRegenerating(false);
+    }
   };
 
   const handleAskNexorbit = (query?: string) => {
     if (onNavigate) {
+      sessionStorage.setItem('pending_ask_command', query || 'Show today’s workspace priorities');
       onNavigate('chat');
     }
   };
@@ -90,24 +199,65 @@ export const CleanMyDayView: React.FC<CleanMyDayViewProps> = ({
               <Sparkles className="h-5 w-5 text-indigo-600 fill-indigo-600/10" />
             </h1>
             <p className="text-xs text-slate-500 font-medium mt-1">
-              Let NEXORBIT decide what matters today.
+              Organize and act on your real-time workspace focus.
             </p>
           </div>
 
-          {/* Regenerate Plan Button */}
-          <button
-            onClick={handleRegeneratePlan}
-            disabled={isRegenerating}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white hover:bg-slate-50 border border-slate-200/90 text-xs font-semibold text-slate-700 transition-all shadow-2xs hover:border-slate-300 cursor-pointer disabled:opacity-60 shrink-0 self-start sm:self-center"
-          >
-            <RotateCw className={cn('h-3.5 w-3.5 text-indigo-600', isRegenerating && 'animate-spin')} />
-            <span>{isRegenerating ? 'Calculating...' : 'Regenerate Plan'}</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowQuickAdd((prev) => !prev)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-xs font-semibold text-white transition-all shadow-xs cursor-pointer"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Add Task</span>
+            </button>
+
+            <button
+              onClick={handleSeedFocusPlan}
+              disabled={isRegenerating}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white hover:bg-slate-50 border border-slate-200/90 text-xs font-semibold text-slate-700 transition-all shadow-2xs hover:border-slate-300 cursor-pointer disabled:opacity-60"
+            >
+              <RotateCw className={cn('h-3.5 w-3.5 text-indigo-600', isRegenerating && 'animate-spin')} />
+              <span>{isRegenerating ? 'Calculating...' : 'Recalculate Priorities'}</span>
+            </button>
+          </div>
         </div>
 
-        {/* ========================================================================= */}
-        {/* MAIN AI SUMMARY CARD                                                     */}
-        {/* ========================================================================= */}
+        {/* Quick Add Form Row */}
+        {showQuickAdd && (
+          <form
+            onSubmit={handleQuickAddTask}
+            className="p-4 rounded-2xl bg-white border border-indigo-100 shadow-xs flex flex-col sm:flex-row items-center gap-3 animate-slideIn"
+          >
+            <input
+              type="text"
+              required
+              value={quickTaskTitle}
+              onChange={(e) => setQuickTaskTitle(e.target.value)}
+              placeholder="What task needs focus?"
+              className="flex-1 w-full bg-slate-50 border border-slate-200/80 rounded-xl px-3 py-1.5 text-xs text-slate-900 focus:outline-none focus:border-indigo-500"
+            />
+            <div className="flex items-center gap-2 shrink-0">
+              <select
+                value={quickTaskPriority}
+                onChange={(e) => setQuickTaskPriority(e.target.value as any)}
+                className="bg-slate-50 border border-slate-200/80 rounded-xl px-3 py-1.5 text-xs text-slate-700 focus:outline-none"
+              >
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+              </select>
+              <button
+                type="submit"
+                className="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition-colors cursor-pointer"
+              >
+                Create
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* Plan Summary Context */}
         <PlanSummaryCard />
 
         {/* ========================================================================= */}
@@ -115,15 +265,32 @@ export const CleanMyDayView: React.FC<CleanMyDayViewProps> = ({
         {/* ========================================================================= */}
         {!hasItems ? (
           /* EMPTY STATE */
-          <div className="bg-white rounded-2xl border border-slate-200/80 p-12 text-center shadow-2xs space-y-3">
-            <div className="h-12 w-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-12 text-center shadow-2xs space-y-4 flex flex-col items-center justify-center">
+            <div className="h-12 w-12 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center">
               <Check className="h-6 w-6" />
             </div>
             <div className="space-y-1">
-              <h3 className="text-base font-bold text-slate-900">You’re clear for today.</h3>
+              <h3 className="text-base font-bold text-slate-900">Your day is clear.</h3>
               <p className="text-xs text-slate-500">
-                NEXORBIT couldn’t find anything that needs your attention right now.
+                You have no pending tasks scheduled for today.
               </p>
+            </div>
+
+            <div className="pt-2 flex items-center gap-2">
+              <button
+                onClick={handleSeedFocusPlan}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-colors cursor-pointer shadow-sm"
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                <span>Initialize Focus Plan</span>
+              </button>
+              <button
+                onClick={() => setShowQuickAdd(true)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors cursor-pointer"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                <span>Add Task</span>
+              </button>
             </div>
           </div>
         ) : (
@@ -213,13 +380,13 @@ export const CleanMyDayView: React.FC<CleanMyDayViewProps> = ({
                     AI Recommendation
                   </div>
                   <p className="text-xs sm:text-sm text-slate-700 font-medium mt-0.5 leading-relaxed">
-                    You have a deadline conflict today. Resolve this before your afternoon meetings.
+                    Recalculate priorities to sync any new calendar, email, or Slack signals automatically.
                   </p>
                 </div>
               </div>
 
               <button
-                onClick={() => handleAskNexorbit('How should I resolve today\'s deadline conflict?')}
+                onClick={() => handleAskNexorbit('How should I resolve today’s critical tasks?')}
                 className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100/80 text-indigo-700 text-xs font-semibold border border-indigo-200/60 transition-colors cursor-pointer shrink-0 self-start sm:self-center"
               >
                 <Sparkles className="h-3.5 w-3.5 text-indigo-600" />
@@ -242,4 +409,3 @@ export const CleanMyDayView: React.FC<CleanMyDayViewProps> = ({
     </div>
   );
 };
-

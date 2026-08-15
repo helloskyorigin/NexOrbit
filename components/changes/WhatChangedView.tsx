@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Sparkles, 
@@ -8,7 +8,8 @@ import {
   Check, 
   Search, 
   RotateCcw,
-  ChevronDown
+  ChevronDown,
+  X
 } from 'lucide-react';
 import { 
   ChangeFeedItem, 
@@ -24,6 +25,14 @@ import { ChangeDetailDrawer } from './ChangeDetailDrawer';
 import { FilterPopover, FilterState } from './FilterPopover';
 import { DateSelectorPopover } from './DateSelectorPopover';
 import { cn } from '../../lib/utils';
+import { useAuth } from '../auth/AuthContext';
+import {
+  subscribeToChanges,
+  dismissChange,
+  updateChangeReadState,
+  markAllChangesAsRead,
+  addChangeSignal,
+} from '../../services/firestore/changes';
 
 export interface WhatChangedViewProps {
   onNavigate?: (pageId: string) => void;
@@ -34,8 +43,11 @@ export const WhatChangedView: React.FC<WhatChangedViewProps> = ({
   onNavigate,
   className,
 }) => {
+  const { user } = useAuth();
+
   // Main Data States
-  const [items, setItems] = useState<ChangeFeedItem[]>(INITIAL_CHANGE_ITEMS);
+  const [items, setItems] = useState<ChangeFeedItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDateRange, setSelectedDateRange] = useState('Today');
@@ -60,23 +72,82 @@ export const WhatChangedView: React.FC<WhatChangedViewProps> = ({
     }, 3000);
   };
 
-  // Toggle single item read state
-  const handleToggleRead = (id: string) => {
-    setItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, isRead: true } : item))
+  // Subscribe to real Firestore updates
+  useEffect(() => {
+    if (!user?.uid) return;
+
+    const unsubscribe = subscribeToChanges(
+      user.uid,
+      (fetchedItems) => {
+        const mapped = fetchedItems.map((item) => ({
+          ...item,
+          id: item.id || '',
+        })) as ChangeFeedItem[];
+        setItems(mapped);
+        setLoading(false);
+      },
+      (err) => {
+        console.error('Error in subscribeToChanges:', err);
+        setLoading(false);
+      }
     );
+
+    return () => unsubscribe();
+  }, [user?.uid]);
+
+  // Seed demo signals inside Firestore
+  const handleSeedDemoSignals = async () => {
+    if (!user?.uid) return;
+    try {
+      setLoading(true);
+      for (const item of INITIAL_CHANGE_ITEMS) {
+        const { id, ...cleanItem } = item;
+        await addChangeSignal(user.uid, cleanItem as any);
+      }
+      triggerToast('Workspace signals successfully seeded to Firestore!');
+    } catch (err) {
+      console.error('Error seeding workspace signals:', err);
+      triggerToast('Seeding failed.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Toggle single item read state
+  const handleToggleRead = async (id: string) => {
+    try {
+      await updateChangeReadState(id, true);
+    } catch (err) {
+      console.error('Error updating read state:', err);
+    }
+  };
+
+  // Dismiss a change signal
+  const handleDismiss = async (id: string) => {
+    try {
+      await dismissChange(id);
+      triggerToast('Change signal dismissed');
+    } catch (err) {
+      console.error('Error dismissing change:', err);
+    }
   };
 
   // Mark all as read
-  const handleMarkAllAsRead = () => {
-    setItems((prev) => prev.map((item) => ({ ...item, isRead: true })));
-    triggerToast('All changes marked as read');
+  const handleMarkAllAsRead = async () => {
+    if (!user?.uid) return;
+    try {
+      await markAllChangesAsRead(user.uid);
+      triggerToast('All changes marked as read');
+    } catch (err) {
+      console.error('Error marking all as read:', err);
+    }
   };
 
   // Handle Ask NEXORBIT
   const handleAskNexorbit = (item: ChangeFeedItem) => {
     if (onNavigate) {
-      onNavigate('ask-my-world');
+      sessionStorage.setItem('pending_ask_command', `Explain why this changed: ${item.title}`);
+      onNavigate('chat');
     }
   };
 
@@ -249,31 +320,42 @@ export const WhatChangedView: React.FC<WhatChangedViewProps> = ({
         <div className="space-y-8">
           {sections.length === 0 ? (
             /* CLEAN MINIMAL EMPTY STATE */
-            <div className="bg-white rounded-2xl border border-slate-200/80 p-12 text-center shadow-2xs space-y-3">
-              <div className="h-12 w-12 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto">
+            <div className="bg-white rounded-2xl border border-slate-200/80 p-12 text-center shadow-2xs space-y-4 flex flex-col items-center justify-center">
+              <div className="h-12 w-12 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center">
                 <Check className="h-6 w-6" />
               </div>
               <div className="space-y-1">
-                <h3 className="text-base font-bold text-slate-900">You’re all caught up.</h3>
-                <p className="text-xs text-slate-500">NEXORBIT will surface important changes here.</p>
+                <h3 className="text-base font-bold text-slate-900">Your workspace is perfectly in sync.</h3>
+                <p className="text-xs text-slate-500">No new notifications or changes found.</p>
               </div>
-              {(activeCategory !== 'all' || searchQuery || popoverFilters.unreadOnly) && (
+
+              <div className="pt-2 flex items-center justify-center gap-3">
                 <button
-                  onClick={() => {
-                    setActiveCategory('all');
-                    setSearchQuery('');
-                    setPopoverFilters({
-                      importance: 'all',
-                      unreadOnly: false,
-                      source: 'all',
-                    });
-                  }}
-                  className="mt-2 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors cursor-pointer"
+                  onClick={handleSeedDemoSignals}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-colors cursor-pointer shadow-sm"
                 >
-                  <RotateCcw className="h-3.5 w-3.5" />
-                  <span>Reset filters</span>
+                  <Sparkles className="h-3.5 w-3.5" />
+                  <span>Seed Demo Signals</span>
                 </button>
-              )}
+
+                {(activeCategory !== 'all' || searchQuery || popoverFilters.unreadOnly) && (
+                  <button
+                    onClick={() => {
+                      setActiveCategory('all');
+                      setSearchQuery('');
+                      setPopoverFilters({
+                        importance: 'all',
+                        unreadOnly: false,
+                        source: 'all',
+                      });
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors cursor-pointer"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" />
+                    <span>Reset filters</span>
+                  </button>
+                )}
+              </div>
             </div>
           ) : (
             /* FEED SECTIONS GROUPED BY TODAY, YESTERDAY, EARLIER */
@@ -297,6 +379,7 @@ export const WhatChangedView: React.FC<WhatChangedViewProps> = ({
                         onOpenDetailDrawer={setActiveDrawerItem}
                         onAskNexorbit={handleAskNexorbit}
                         onToggleRead={handleToggleRead}
+                        onDismiss={handleDismiss}
                       />
                     ))}
                   </div>

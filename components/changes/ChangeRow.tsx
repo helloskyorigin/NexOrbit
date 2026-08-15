@@ -14,7 +14,8 @@ import {
   Sparkles,
   ArrowRight,
   ExternalLink,
-  MessageSquareShare
+  MessageSquareShare,
+  X
 } from 'lucide-react';
 import { ChangeFeedItem } from './types';
 import { SourceIcon } from './SourceIcon';
@@ -26,6 +27,7 @@ export interface ChangeRowProps {
   onOpenDetailDrawer?: (item: ChangeFeedItem) => void;
   onAskNexorbit?: (item: ChangeFeedItem) => void;
   onToggleRead?: (id: string) => void;
+  onDismiss?: (id: string) => void;
 }
 
 export const ChangeRow: React.FC<ChangeRowProps> = ({
@@ -33,6 +35,7 @@ export const ChangeRow: React.FC<ChangeRowProps> = ({
   onOpenDetailDrawer,
   onAskNexorbit,
   onToggleRead,
+  onDismiss,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -117,6 +120,20 @@ export const ChangeRow: React.FC<ChangeRowProps> = ({
               />
             </div>
           ) : null}
+
+          {/* Dismiss Button */}
+          {onDismiss && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onDismiss(item.id);
+              }}
+              className="direct-action h-8 w-8 rounded-full hover:bg-rose-50 border border-transparent hover:border-rose-100 flex items-center justify-center text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
+              title="Dismiss Change"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
 
           {/* Arrow Affordance */}
           <div className="h-8 w-8 rounded-full bg-slate-50 group-hover:bg-indigo-50 border border-slate-200/60 group-hover:border-indigo-100 flex items-center justify-center text-slate-400 group-hover:text-indigo-600 transition-colors">
