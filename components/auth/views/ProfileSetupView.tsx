@@ -151,22 +151,22 @@ export const ProfileSetupView: React.FC = () => {
 
       {/* ================= STEP 1: NAME ================= */}
       {step === 1 && (
-        <form onSubmit={handleStep1Submit} className="space-y-4 animate-in fade-in duration-150" noValidate>
-          <div className="space-y-1">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-950">
+        <form onSubmit={handleStep1Submit} className="space-y-6 animate-in fade-in duration-150" noValidate>
+          <div className="space-y-2">
+            <h1 className="text-[28px] font-bold tracking-tight text-slate-900">
               What&apos;s your name?
             </h1>
-            <p className="text-sm text-slate-500 font-normal leading-relaxed">
+            <p className="text-[15px] text-slate-500 font-normal leading-relaxed">
               We&apos;ll use this name across your workspace profile.
             </p>
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-slate-700 block">
+            <label className="text-[13px] font-medium text-slate-700 block">
               Full Name
             </label>
             <div className="relative">
-              <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
               <input
                 ref={nameInputRef}
                 type="text"
@@ -177,16 +177,16 @@ export const ProfileSetupView: React.FC = () => {
                 }}
                 placeholder="e.g. Alex Morgan"
                 className={cn(
-                  'w-full h-11 pl-10 pr-3.5 text-sm bg-white text-slate-900 placeholder:text-slate-400 rounded-xl border focus:outline-none transition-all duration-150',
+                  'w-full h-[52px] pl-[42px] pr-4 text-[15px] bg-white text-slate-900 placeholder:text-slate-400 rounded-[16px] border focus:outline-none transition-all duration-150',
                   nameError
-                    ? 'border-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-500/10'
-                    : 'border-slate-200 focus:border-slate-950 focus:ring-2 focus:ring-slate-950/10'
+                    ? 'border-red-300 focus:border-red-500 focus:ring-[3px] focus:ring-red-500/10'
+                    : 'border-slate-200 focus:border-slate-950 focus:ring-[3px] focus:ring-slate-950/10'
                 )}
                 autoFocus
               />
             </div>
             {nameError && (
-              <p className="text-xs text-red-600 font-medium animate-in fade-in-50">
+              <p className="text-[13px] text-red-600 font-medium animate-in fade-in-50 pt-1">
                 {nameError}
               </p>
             )}
@@ -195,7 +195,7 @@ export const ProfileSetupView: React.FC = () => {
           <div className="pt-2">
             <button
               type="submit"
-              className="w-full h-11 px-4 rounded-xl bg-slate-950 hover:bg-slate-900 active:scale-[0.99] text-white font-medium text-sm shadow-xs transition-all duration-150 cursor-pointer flex items-center justify-center gap-2 group"
+              className="w-full h-[52px] px-5 rounded-[16px] bg-slate-950 hover:bg-slate-900 active:scale-[0.99] text-white font-medium text-[15px] shadow-[0_1px_2px_rgba(0,0,0,0.02)] transition-all duration-150 cursor-pointer flex items-center justify-center gap-2 group"
             >
               <span>Continue</span>
               <ArrowRight className="h-4 w-4 opacity-80 group-hover:translate-x-0.5 transition-transform" />
@@ -206,18 +206,18 @@ export const ProfileSetupView: React.FC = () => {
 
       {/* ================= STEP 2: COUNTRY / REGION ================= */}
       {step === 2 && (
-        <form onSubmit={handleStep2Submit} className="space-y-4 animate-in fade-in duration-150" noValidate>
-          <div className="space-y-1">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-950">
+        <form onSubmit={handleStep2Submit} className="space-y-6 animate-in fade-in duration-150" noValidate>
+          <div className="space-y-2">
+            <h1 className="text-[28px] font-bold tracking-tight text-slate-900">
               Where are you based?
             </h1>
-            <p className="text-sm text-slate-500 font-normal leading-relaxed">
+            <p className="text-[15px] text-slate-500 font-normal leading-relaxed">
               Select your country or region for localized settings.
             </p>
           </div>
 
           <div className="space-y-1.5" ref={dropdownRef}>
-            <label className="text-xs font-medium text-slate-700 block">
+            <label className="text-[13px] font-medium text-slate-700 block">
               Country / Region
             </label>
             <div className="relative">
@@ -227,29 +227,29 @@ export const ProfileSetupView: React.FC = () => {
                   setIsCountryOpen(!isCountryOpen);
                   setSearchQuery('');
                 }}
-                className="w-full h-11 px-3.5 text-sm bg-white hover:bg-slate-50 text-slate-900 rounded-xl border border-slate-200 focus:border-slate-950 focus:ring-2 focus:ring-slate-950/10 focus:outline-none text-left flex items-center justify-between transition-all duration-150 cursor-pointer"
+                className="w-full h-[52px] px-4 text-[15px] bg-white hover:bg-slate-50 text-slate-900 rounded-[16px] border border-slate-200 focus:border-slate-950 focus:ring-[3px] focus:ring-slate-950/10 focus:outline-none text-left flex items-center justify-between transition-all duration-150 cursor-pointer"
               >
                 {selectedCountry ? (
-                  <span className="flex items-center gap-2.5">
-                    <span className="text-lg leading-none select-none">{selectedCountry.flag}</span>
-                    <span className="font-medium text-slate-900 text-sm">{selectedCountry.name}</span>
+                  <span className="flex items-center gap-3">
+                    <span className="text-[22px] leading-none select-none">{selectedCountry.flag}</span>
+                    <span className="font-medium text-slate-900 text-[15px]">{selectedCountry.name}</span>
                   </span>
                 ) : (
-                  <span className="text-slate-400 text-xs">Select country</span>
+                  <span className="text-slate-400 text-[15px]">Select country</span>
                 )}
-                <ChevronDown className="h-4 w-4 text-slate-400" />
+                <ChevronDown className="h-5 w-5 text-slate-400" />
               </button>
 
               {isCountryOpen && (
-                <div className="absolute z-50 left-0 right-0 mt-1 bg-white rounded-xl border border-slate-200 shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-1 duration-100">
+                <div className="absolute z-50 left-0 right-0 mt-2 bg-white rounded-[16px] border border-slate-200 shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-1 duration-100">
                   <div className="relative border-b border-slate-100 p-2">
-                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                     <input
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Search countries..."
-                      className="w-full h-8 pl-9 pr-3 bg-slate-50 text-xs text-slate-900 placeholder:text-slate-400 rounded-lg border-none focus:ring-1 focus:ring-slate-950 focus:outline-none"
+                      className="w-full h-10 pl-9 pr-3 bg-slate-50 text-[13px] text-slate-900 placeholder:text-slate-400 rounded-xl border-none focus:ring-2 focus:ring-slate-950 focus:outline-none"
                       autoFocus
                     />
                   </div>
@@ -261,23 +261,23 @@ export const ProfileSetupView: React.FC = () => {
                           type="button"
                           onClick={() => handleCountrySelect(country)}
                           className={cn(
-                            'w-full px-3.5 py-2 text-xs text-left flex items-center justify-between hover:bg-slate-50 cursor-pointer',
+                            'w-full px-4 py-2.5 text-[15px] text-left flex items-center justify-between hover:bg-slate-50 cursor-pointer',
                             selectedCountry?.code === country.code
                               ? 'bg-slate-50 text-slate-950 font-semibold'
                               : 'text-slate-700'
                           )}
                         >
-                          <span className="flex items-center gap-2.5">
-                            <span className="text-base leading-none select-none">{country.flag}</span>
+                          <span className="flex items-center gap-3">
+                            <span className="text-lg leading-none select-none">{country.flag}</span>
                             <span>{country.name}</span>
                           </span>
                           {selectedCountry?.code === country.code && (
-                            <Check className="h-3.5 w-3.5 text-slate-950 shrink-0" />
+                            <Check className="h-4 w-4 text-slate-950 shrink-0" />
                           )}
                         </button>
                       ))
                     ) : (
-                      <div className="px-3 py-4 text-xs text-center text-slate-400 font-medium">
+                      <div className="px-4 py-6 text-[13px] text-center text-slate-400 font-medium">
                         No country found
                       </div>
                     )}
@@ -287,18 +287,18 @@ export const ProfileSetupView: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 pt-2">
+          <div className="flex items-center gap-3 pt-2">
             <button
               type="button"
               onClick={() => setStep(1)}
-              className="h-11 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-medium text-sm transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+              className="h-[52px] px-5 rounded-[16px] border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-medium text-[15px] transition-colors cursor-pointer flex items-center justify-center gap-1.5"
             >
               <ArrowLeft className="h-4 w-4" />
               <span>Back</span>
             </button>
             <button
               type="submit"
-              className="flex-1 h-11 px-4 rounded-xl bg-slate-950 hover:bg-slate-900 active:scale-[0.99] text-white font-medium text-sm shadow-xs transition-all duration-150 cursor-pointer flex items-center justify-center gap-2 group"
+              className="flex-1 h-[52px] px-5 rounded-[16px] bg-slate-950 hover:bg-slate-900 active:scale-[0.99] text-white font-medium text-[15px] shadow-[0_1px_2px_rgba(0,0,0,0.02)] transition-all duration-150 cursor-pointer flex items-center justify-center gap-2 group"
             >
               <span>Continue</span>
               <ArrowRight className="h-4 w-4 opacity-80 group-hover:translate-x-0.5 transition-transform" />
@@ -309,17 +309,17 @@ export const ProfileSetupView: React.FC = () => {
 
       {/* ================= STEP 3: PREFERRED LANGUAGE ================= */}
       {step === 3 && (
-        <form onSubmit={handleStep3Submit} className="space-y-4 animate-in fade-in duration-150" noValidate>
-          <div className="space-y-1">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-950">
+        <form onSubmit={handleStep3Submit} className="space-y-6 animate-in fade-in duration-150" noValidate>
+          <div className="space-y-2">
+            <h1 className="text-[28px] font-bold tracking-tight text-slate-900">
               Preferred Language
             </h1>
-            <p className="text-sm text-slate-500 font-normal leading-relaxed">
+            <p className="text-[15px] text-slate-500 font-normal leading-relaxed">
               Choose your primary language for the application interface.
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 max-h-56 overflow-y-auto pr-1">
+          <div className="grid grid-cols-2 gap-3 max-h-60 overflow-y-auto pr-1">
             {SUPPORTED_LANGUAGES.map((lang) => {
               const isSelected = selectedLanguage === lang.code;
               return (
@@ -328,28 +328,28 @@ export const ProfileSetupView: React.FC = () => {
                   type="button"
                   onClick={() => setSelectedLanguage(lang.code)}
                   className={cn(
-                    'p-3 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer',
+                    'p-4 rounded-[16px] border text-left flex items-center justify-between transition-all cursor-pointer h-[60px]',
                     isSelected
-                      ? 'border-slate-950 bg-slate-950 text-white shadow-xs font-medium'
-                      : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-xs'
+                      ? 'border-slate-950 bg-slate-950 text-white shadow-[0_1px_2px_rgba(0,0,0,0.02)] font-medium'
+                      : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-[15px]'
                   )}
                 >
-                  <span className="flex items-center gap-2 truncate">
-                    <Languages className="h-4 w-4 opacity-70 shrink-0" />
-                    <span className="truncate text-xs font-medium">{lang.nativeName}</span>
+                  <span className="flex items-center gap-2.5 truncate">
+                    <Languages className="h-5 w-5 opacity-70 shrink-0" />
+                    <span className="truncate text-[15px] font-medium">{lang.nativeName}</span>
                   </span>
-                  {isSelected && <Check className="h-3.5 w-3.5 shrink-0" />}
+                  {isSelected && <Check className="h-4 w-4 shrink-0" />}
                 </button>
               );
             })}
           </div>
 
-          <div className="flex items-center gap-2 pt-2">
+          <div className="flex items-center gap-3 pt-2">
             <button
               type="button"
               disabled={loading}
               onClick={() => setStep(2)}
-              className="h-11 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-medium text-sm transition-colors cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
+              className="h-[52px] px-5 rounded-[16px] border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-medium text-[15px] transition-colors cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
             >
               <ArrowLeft className="h-4 w-4" />
               <span>Back</span>
@@ -357,12 +357,12 @@ export const ProfileSetupView: React.FC = () => {
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 h-11 px-4 rounded-xl bg-slate-950 hover:bg-slate-900 active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium text-sm shadow-xs transition-all duration-150 cursor-pointer flex items-center justify-center gap-2 group"
+              className="flex-1 h-[52px] px-5 rounded-[16px] bg-slate-950 hover:bg-slate-900 active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium text-[15px] shadow-[0_1px_2px_rgba(0,0,0,0.02)] transition-all duration-150 cursor-pointer flex items-center justify-center gap-2 group"
             >
               {loading ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin text-slate-300" />
-                  <span>Setting up profile...</span>
+                  <Loader2 className="h-5 w-5 animate-spin text-slate-300" />
+                  <span>Setting up...</span>
                 </>
               ) : (
                 <>

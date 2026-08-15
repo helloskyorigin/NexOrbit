@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Shield, Zap, Lock } from 'lucide-react';
+import { Shield, Zap, Lock, Globe, ChevronDown } from 'lucide-react';
 import { useAuth } from './AuthContext';
 import { WelcomeView } from './views/WelcomeView';
 import { CreateAccountView } from './views/CreateAccountView';
@@ -20,7 +20,7 @@ export interface AuthContainerProps {
 }
 
 export const AuthContainer: React.FC<AuthContainerProps> = ({ className }) => {
-  const { authView } = useAuth();
+  const { authView, language, setLanguage } = useAuth();
   const [legalModal, setLegalModal] = useState<'terms' | 'privacy' | null>(null);
 
   const renderCurrentView = () => {
@@ -54,11 +54,31 @@ export const AuthContainer: React.FC<AuthContainerProps> = ({ className }) => {
         className
       )}
     >
+      {/* Top Right Language Selector */}
+      <div className="absolute top-6 right-6 lg:top-8 lg:right-12 z-50">
+        <div className="flex items-center p-1 bg-slate-100/80 hover:bg-slate-100 border border-slate-200/60 rounded-full transition-colors">
+          <button 
+            onClick={() => setLanguage('en')}
+            className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all", language === 'en' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700")}
+          >
+            <Globe className="h-3.5 w-3.5" />
+            <span>English</span>
+            <ChevronDown className="h-3 w-3 ml-0.5 opacity-50" />
+          </button>
+          <button 
+            onClick={() => setLanguage('hi')}
+            className={cn("px-3 py-1.5 rounded-full text-xs font-medium transition-all", language === 'hi' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700")}
+          >
+            हिन्दी
+          </button>
+        </div>
+      </div>
+
       <div className="flex-1 w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 min-h-screen p-4 sm:p-8 lg:p-12 items-center">
         {/* Left Column: Brand Hero & Orbital Visuals (Desktop) */}
         <div className="hidden lg:flex lg:col-span-7 flex-col justify-between h-full pr-8 xl:pr-16 py-6 select-none relative">
           {/* Top Brand Logo */}
-          <div className="flex items-center">
+          <div className="flex items-center justify-between w-full">
             <NexOrbitLogo variant="full" size="md" />
           </div>
 
@@ -86,10 +106,10 @@ export const AuthContainer: React.FC<AuthContainerProps> = ({ className }) => {
                   className="opacity-60"
                 />
                 {/* Floating planetary spheres */}
-                <circle cx="165" cy="225" r="10" className="fill-slate-900 shadow-md" />
+                <circle cx="165" cy="225" r="10" className="fill-indigo-600 shadow-md" />
                 <circle cx="162" cy="222" r="3" className="fill-white/30" />
                 
-                <circle cx="410" cy="130" r="4.5" className="fill-indigo-600/80" />
+                <circle cx="410" cy="130" r="4.5" className="fill-blue-500/80" />
                 <circle cx="105" cy="310" r="3.5" className="fill-slate-400" />
 
                 <defs>
@@ -108,11 +128,19 @@ export const AuthContainer: React.FC<AuthContainerProps> = ({ className }) => {
             </div>
 
             <div className="relative z-10 space-y-4 max-w-lg">
-              <h1 className="text-4xl xl:text-[44px] font-bold text-slate-950 tracking-tight leading-[1.12]">
-                Your AI workspace for the future.
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-50 border border-indigo-100/50 text-indigo-600 text-xs font-medium mb-2">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 3l1.912 5.813a2 2 0 001.275 1.275L21 12l-5.813 1.912a2 2 0 00-1.275 1.275L12 21l-1.912-5.813a2 2 0 00-1.275-1.275L3 12l5.813-1.912a2 2 0 001.275-1.275L12 3z" className="fill-indigo-600 stroke-indigo-600" />
+                </svg>
+                Welcome to NexOrbit
+              </div>
+              <h1 className="text-5xl xl:text-[56px] font-bold text-slate-900 tracking-tight leading-[1.1]">
+                Your AI <br/>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-blue-500">workspace</span> <br/>
+                for the future
               </h1>
-              <p className="text-base text-slate-500 font-normal leading-relaxed max-w-md">
-                One secure place for all your work, AI agents, and integrations.
+              <p className="text-base text-slate-500 font-normal leading-relaxed max-w-md mt-4">
+                One secure place for all your work, <br/>AI agents, and integrations.
               </p>
             </div>
 

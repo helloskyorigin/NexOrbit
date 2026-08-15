@@ -43,7 +43,7 @@ export const PasswordInputView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-5 text-left animate-in fade-in zoom-in-95 duration-200 relative">
+    <div className="space-y-6 text-left animate-in fade-in zoom-in-95 duration-200 relative">
       {/* Top back navigation */}
       <div>
         <button
@@ -51,7 +51,7 @@ export const PasswordInputView: React.FC = () => {
           disabled={loading}
           onClick={() => {
             clearError();
-            setAuthView('welcome');
+            setAuthView('email-signin');
           }}
           className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-900 transition-colors cursor-pointer disabled:opacity-50"
         >
@@ -61,11 +61,11 @@ export const PasswordInputView: React.FC = () => {
       </div>
 
       {/* Header */}
-      <div className="space-y-1">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-950">
+      <div className="space-y-2">
+        <h1 className="text-[28px] font-bold tracking-tight text-slate-900">
           Enter your password
         </h1>
-        <div className="flex items-center gap-2 text-xs text-slate-500">
+        <div className="flex items-center gap-2 text-[15px] text-slate-500">
           <span className="truncate max-w-[200px] font-medium text-slate-700">
             {pendingEmail || 'you@example.com'}
           </span>
@@ -75,9 +75,9 @@ export const PasswordInputView: React.FC = () => {
             disabled={loading}
             onClick={() => {
               clearError();
-              setAuthView('welcome');
+              setAuthView('email-signin');
             }}
-            className="text-slate-950 hover:text-indigo-600 font-semibold cursor-pointer underline underline-offset-2 disabled:opacity-50"
+            className="text-slate-900 hover:text-indigo-600 font-semibold cursor-pointer underline underline-offset-2 disabled:opacity-50"
           >
             Change
           </button>
@@ -98,10 +98,10 @@ export const PasswordInputView: React.FC = () => {
       )}
 
       {/* Password Form */}
-      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+      <form onSubmit={handleSubmit} className="space-y-5" noValidate>
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <label htmlFor="password-input" className="text-xs font-medium text-slate-700 block">
+            <label htmlFor="password-input" className="text-[13px] font-medium text-slate-700 block">
               Password
             </label>
             <button
@@ -111,7 +111,7 @@ export const PasswordInputView: React.FC = () => {
                 clearError();
                 setAuthView('forgot-password');
               }}
-              className="text-xs text-slate-500 hover:text-slate-950 font-medium transition-colors cursor-pointer disabled:opacity-50"
+              className="text-[13px] text-slate-500 hover:text-slate-900 font-medium transition-colors cursor-pointer disabled:opacity-50"
             >
               Forgot password?
             </button>
@@ -119,7 +119,7 @@ export const PasswordInputView: React.FC = () => {
 
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-              <Lock className="h-4 w-4" />
+              <Lock className="h-5 w-5" />
             </div>
             <input
               ref={passwordInputRef}
@@ -137,26 +137,26 @@ export const PasswordInputView: React.FC = () => {
               placeholder="Enter your password"
               required
               autoFocus
-              className={`w-full h-11 pl-10 pr-10 text-sm bg-white text-slate-900 placeholder:text-slate-400 rounded-xl border transition-all duration-150 disabled:opacity-60 disabled:bg-slate-50 focus:outline-none ${
+              className={`w-full h-[52px] pl-[42px] pr-12 text-[15px] bg-white text-slate-900 placeholder:text-slate-400 rounded-[16px] border transition-all duration-200 disabled:opacity-60 disabled:bg-slate-50 focus:outline-none ${
                 isPasswordError
-                  ? 'border-rose-400 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/15'
-                  : 'border-slate-200 focus:border-slate-950 focus:ring-2 focus:ring-slate-950/10'
+                  ? 'border-rose-400 focus:border-rose-500 focus:ring-[3px] focus:ring-rose-500/15'
+                  : 'border-slate-200 focus:border-slate-950 focus:ring-[3px] focus:ring-slate-950/10'
               }`}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+              className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
               aria-label={showPassword ? 'Hide password' : 'Show password'}
             >
-              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
             </button>
           </div>
 
           {/* Inline Field Error */}
           {isPasswordError && passwordErrorMessage && (
-            <div className="flex items-center justify-between pt-0.5 animate-in fade-in slide-in-from-top-1 duration-150">
-              <p className="text-xs text-rose-600 font-medium">
+            <div className="flex items-center justify-between pt-1 animate-in fade-in slide-in-from-top-1 duration-150">
+              <p className="text-[13px] text-rose-600 font-medium">
                 {passwordErrorMessage}
               </p>
               <button
@@ -165,7 +165,7 @@ export const PasswordInputView: React.FC = () => {
                   clearError();
                   setAuthView('forgot-password');
                 }}
-                className="text-xs text-indigo-600 hover:text-indigo-800 font-medium underline underline-offset-2 ml-2 shrink-0 cursor-pointer"
+                className="text-[13px] text-indigo-600 hover:text-indigo-800 font-medium underline underline-offset-2 ml-2 shrink-0 cursor-pointer"
               >
                 Reset
               </button>
@@ -176,18 +176,12 @@ export const PasswordInputView: React.FC = () => {
         <button
           type="submit"
           disabled={loading}
-          className="w-full h-11 px-4 rounded-xl bg-slate-950 hover:bg-slate-900 active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium text-sm shadow-xs transition-all duration-150 cursor-pointer flex items-center justify-center gap-2 group"
+          className="w-full h-[52px] px-5 rounded-[16px] bg-slate-950 hover:bg-slate-900 active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium text-[15px] shadow-[0_1px_2px_rgba(0,0,0,0.02)] transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 group"
         >
           {loading ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin text-slate-300" />
-              <span>Signing in...</span>
-            </>
+            <Loader2 className="h-5 w-5 animate-spin text-slate-300" />
           ) : (
-            <>
-              <span>Sign in</span>
-              <ArrowRight className="h-4 w-4 opacity-80 group-hover:translate-x-0.5 transition-transform" />
-            </>
+            <span>Sign in</span>
           )}
         </button>
       </form>
