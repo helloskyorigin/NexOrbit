@@ -1,4 +1,4 @@
-export type Language = 'en' | 'hi' | 'bn' | 'ta' | 'te' | 'mr' | 'es' | 'fr' | 'de' | 'ja';
+export type Language = 'en' | 'hi';
 
 export interface LanguageOption {
   code: Language;
@@ -9,14 +9,6 @@ export interface LanguageOption {
 export const SUPPORTED_LANGUAGES: LanguageOption[] = [
   { code: 'en', name: 'English', nativeName: 'English' },
   { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी' },
-  { code: 'bn', name: 'Bengali', nativeName: 'বাংলা' },
-  { code: 'ta', name: 'Tamil', nativeName: 'தமிழ்' },
-  { code: 'te', name: 'Telugu', nativeName: 'తెలుగు' },
-  { code: 'mr', name: 'Marathi', nativeName: 'मराठी' },
-  { code: 'es', name: 'Spanish', nativeName: 'Español' },
-  { code: 'fr', name: 'French', nativeName: 'Français' },
-  { code: 'de', name: 'German', nativeName: 'Deutsch' },
-  { code: 'ja', name: 'Japanese', nativeName: '日本語' },
 ];
 
 export const translations: Record<Language, Record<string, string>> = {
@@ -64,13 +56,20 @@ export const translations: Record<Language, Record<string, string>> = {
     countryPlaceholder: 'Select your country',
     searchCountry: 'Search country...',
     languageLabel: 'What language would you like to use?',
-    completeSetupBtn: 'Continue',
+    completeSetupBtn: 'Complete setup',
 
     // States & Reassurance
     signingIn: 'Signing you in...',
+    signingInSub: 'Securely connecting your account.',
+    preparingWorkspace: 'Preparing your workspace...',
+    preparingWorkspaceSub: 'Setting things up for you.',
+    almostThere: 'Almost there...',
+    almostThereSub: 'Finishing your workspace.',
     securingSession: 'Verifying workspace authorization...',
     authFailedTitle: 'Authentication Failed',
     tryAgain: 'Try again',
+    timeoutTitle: 'Something is taking longer than expected.',
+    timeoutSub: 'Please try again.',
     securityReassurance: 'Your account and data stay under your control.',
     
     // Errors
@@ -122,13 +121,20 @@ export const translations: Record<Language, Record<string, string>> = {
     countryPlaceholder: 'अपना देश चुनें',
     searchCountry: 'देश खोजें...',
     languageLabel: 'आप किस भाषा का उपयोग करना चाहेंगे?',
-    completeSetupBtn: 'आगे बढ़ें',
+    completeSetupBtn: 'सेटअप पूरा करें',
 
     // States & Reassurance
     signingIn: 'साइन इन हो रहा है...',
+    signingInSub: 'आपके खाते को सुरक्षित रूप से कनेक्ट किया जा रहा है।',
+    preparingWorkspace: 'आपका वर्कस्पेस तैयार किया जा रहा है...',
+    preparingWorkspaceSub: 'चीजों को सेट किया जा रहा है।',
+    almostThere: 'बस हो ही गया...',
+    almostThereSub: 'आपके वर्कस्पेस को अंतिम रूप दिया जा रहा है।',
     securingSession: 'वर्कस्पेस प्रमाणीकरण की जांच हो रही है...',
     authFailedTitle: 'प्रमाणीकरण विफल रहा',
     tryAgain: 'पुनः प्रयास करें',
+    timeoutTitle: 'इसमें अपेक्षा से अधिक समय लग रहा है।',
+    timeoutSub: 'कृपया पुनः प्रयास करें।',
     securityReassurance: 'आपका खाता और डेटा आपके नियंत्रण में रहता है।',
     
     // Errors
@@ -136,21 +142,7 @@ export const translations: Record<Language, Record<string, string>> = {
     passwordMinError: 'पासवर्ड कम से कम 8 अक्षरों का होना चाहिए।',
     incorrectPasswordError: 'गलत पासवर्ड। पुनः प्रयास करें।',
   },
-  bn: {
-    brandName: 'NexOrbit',
-    welcomeTitle: 'NexOrbit এ স্বাগতম',
-    welcomeSubtitle: 'আপনার ব্যক্তিগত AI ওয়ার্কস্পেস।',
-    profileSetupTitle: 'NexOrbit এ স্বাগতম',
-    profileSetupSubtitle: 'আসুন আপনার ওয়ার্কস্পেস ব্যক্তিগতকৃত করি।',
-    languageLabel: 'আপনি কোন ভাষা ব্যবহার করতে চান?',
-    completeSetupBtn: 'এগিয়ে যান',
-  },
-  ta: {
-    brandName: 'NexOrbit',
-    welcomeTitle: 'NexOrbit-க்கு வரவேற்கிறோம்',
-    welcomeSubtitle: 'உங்கள் தனிப்பட்ட AI பணியிடம்.',
-    profileSetupTitle: 'NexOrbit-க்கு வரவேற்கிறோம்',
-    profileSetupSubtitle: 'உங்கள் பணியிடத்தை தனிப்பயனாக்குவோம்.',
+};�� பணியிடத்தை தனிப்பயனாக்குவோம்.',
     languageLabel: 'நீங்கள் எந்த மொழியைப் பயன்படுத்த விரும்புகிறீர்கள்?',
     completeSetupBtn: 'தொடரவும்',
   },

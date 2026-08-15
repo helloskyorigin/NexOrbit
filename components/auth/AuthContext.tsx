@@ -12,6 +12,11 @@ import {
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db, googleProvider, githubProvider } from '../../lib/firebase';
+import {
+  getOrCreateUserProfile,
+  updateUserProfile as firestoreUpdateUserProfile,
+  UserProfile,
+} from '../../services/firestore/userProfile';
 import { AuthContextType, AuthUser, AuthView } from './types';
 import { Language, translations } from './translations';
 import {
@@ -98,46 +103,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (e) {}
   }, []);
 
-  // Helper to load profile from Firestore or localStorage
-  // Helper to load or create user profile in Firestore (Phase 1)
+  // Helper to load or create user profile in Firestore
   const loadOrCreateUserProfile = async (firebaseUser: any) => {
-    let profileData: Record<string, any> = {};
-    const userRef = doc(db, 'users', firebaseUser.uid);
-    try {
-      const snapshot = await getDoc(userRef);
-      if (snapshot.exists()) {
-        profileData = snapshot.data();
-        await updateDoc(userRef, {
-          lastLoginAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-        });
-      } else {
-        profileData = {
-          uid: firebaseUser.uid,
-          displayName: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || '',
-          email: firebaseUser.email || '',
-          photoURL: firebaseUser.photoURL || null,
-          provider: firebaseUser.providerData[0]?.providerId || 'password',
-          country: '',
-          language: 'en',
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
-          onboardingCompleted: false,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-          lastLoginAt: serverTimestamp(),
-        };
-        await setDoc(userRef, profileData);
-      }
-    } catch (e) {
-      console.warn('Firestore user profile sync warning:', e);
-      try {
-        const stored = localStorage.getItem('nexorbit_profile_' + firebaseUser.uid);
-        if (stored) {
-          profileData = JSON.parse(stored);
-        }
-      } catch (err) {}
-    }
-    return profileData;
+    return await getOrCreateUserProfile(firebaseUser);
   };
 // Listen to Firebase Auth state changes
   useEffect(() => {
@@ -468,12 +436,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.removeItem('nexorbit_temp_fullname');
       } catch (e) {}
 
-      // Save to Firestore database if accessible
+      // Save to Firestore database via service layer
       try {
-        if (db) {
-          const userRef = doc(db, 'users', firebaseUser.uid);
-          await setDoc(userRef, fullProfile, { merge: true });
-        }
+        await firestoreUpdateUserProfile(firebaseUser.uid, {
+          displayName: nameValidation.cleanName,
+          country: profileData.country || 'India 🇮🇳',
+          language: profileData.language || 'en',
+          onboardingCompleted: true,
+          timezone: profileData.timezone || 'Asia/Kolkata',
+          workStyle: profileData.workStyle || 'General Productivity',
+        });
       } catch (e) {
         console.warn('Firestore user profile sync warning (local cache used):', e);
       }
@@ -531,10 +503,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (newData.workStyle !== undefined) cleanData.workStyle = newData.workStyle;
       if (newData.photoURL !== undefined) cleanData.photoURL = newData.photoURL;
       
-      cleanData.updatedAt = new Date().toISOString();
-
-      // Write directly to firestore
-      await updateDoc(userRef, cleanData);
+      // Write to firestore via service
+      await firestoreUpdateUserProfile(firebaseUser.uid, cleanData);
 
       // Save to localStorage cache
       const stored = localStorage.getItem(`nexorbit_profile_${firebaseUser.uid}`);
